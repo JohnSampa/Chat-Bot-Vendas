@@ -50,6 +50,21 @@ public class IntentionService {
         ));
 
         intentions.add(new Intention(
+                List.of(
+                        "verificar vendas",
+                        "consultar vendas",
+                        "listar vendas",
+                        "minhas vendas",
+                        "histórico de vendas",
+                        "historico de vendas",
+                        "ver vendas",
+                        "total das vendas",
+                        "vendas"
+                ),
+                BotCommands::verificarVendas
+        ));
+
+        intentions.add(new Intention(
                 List.of("consulta", "estoque", "produtos", "opções", "opcoes", "catalogo", "catálogo"),
                 BotCommands::estoque
         ));

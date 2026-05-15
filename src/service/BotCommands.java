@@ -277,6 +277,8 @@ public class BotCommands {
 
         System.out.println("• Carrinho: carrinho ou pedido. Para limpar: limpar carrinho ou esvaziar carrinho.");
 
+        System.out.println("• Vendas: vendas, verificar vendas ou consultar vendas.");
+
         System.out.println("• Preços e políticas: preço, entrega, pagamento, troca, promoção, contato.");
 
         System.out.println("• Sair: sair, exit ou quit.");
@@ -324,6 +326,50 @@ public class BotCommands {
         }
 
         System.out.printf("Total geral: %.2f%n", total);
+
+    }
+
+
+
+    public static void verificarVendas() {
+
+        List<Venda> vendas = VendasService.getInstance().getVendas();
+
+        if (vendas.isEmpty()) {
+
+            System.out.println("Não há vendas registradas nesta sessão. Adicione itens ao carrinho comprando produtos.");
+
+            return;
+
+        }
+
+        System.out.println("===== Vendas nesta sessão =====");
+
+        double total = 0;
+
+        for (Venda v : vendas) {
+
+            double sub = v.getTotal();
+
+            total += sub;
+
+            System.out.printf(
+
+                    "Venda #%d | %s | Qtd: %d | Subtotal: %.2f%n",
+
+                    v.getId(),
+
+                    v.getProduto().getNome(),
+
+                    v.getQuantidade(),
+
+                    sub
+
+            );
+
+        }
+
+        System.out.printf("Total acumulado: %.2f%n", total);
 
     }
 
