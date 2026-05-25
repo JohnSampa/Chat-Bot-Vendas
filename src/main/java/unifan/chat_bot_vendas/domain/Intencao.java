@@ -38,6 +38,8 @@ public class Intencao {
     @Enumerated(EnumType.STRING)
     private TipoAcao tipoAcao;
 
+    private boolean ativa = true;
+
     @OneToMany(mappedBy = "intencao",cascade = CascadeType.ALL)
     private List<PalavraChave> palavrasChaves;
 }

@@ -4,9 +4,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import unifan.chat_bot_vendas.domain.Intencao;
 import unifan.chat_bot_vendas.domain.enums.TipoAcao;
 
-import java.util.Optional;
+import java.util.List;
 
-public interface IntencaoRepository extends JpaRepository<Intencao, String> {
+public interface IntencaoRepository extends JpaRepository<Intencao, Long> {
 
     Intencao findByTipoAcao(TipoAcao tipoAcao);
+
+    List<Intencao> findByAtivaTrue();
 }

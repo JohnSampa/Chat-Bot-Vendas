@@ -30,8 +30,10 @@ public class Venda {
 
     private Integer quantidade;
 
+    private Double total;
+
     public Double getTotal() {
-        return produto.getPreco() * quantidade;
+        return total = produto.getPreco() * quantidade;
     }
 
 }

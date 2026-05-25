@@ -40,4 +40,6 @@ public class SessaoChat {
 
     private Integer quantidade;
 
+    private String tipoProdutoInteresse;
+
 }
