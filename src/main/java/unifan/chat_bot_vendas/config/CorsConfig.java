@@ -13,6 +13,7 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/chatbot/**")
+                        .allowedOrigins("https://johnsampa.github.io/")
                         .allowedOrigins("http://localhost:3000")
                         .allowedMethods("GET", "POST", "OPTIONS")
                         .allowedHeaders("*");
