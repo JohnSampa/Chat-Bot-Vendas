@@ -5,6 +5,11 @@ ALTER TABLE sessao_chat
     ADD COLUMN IF NOT EXISTS item_pendente_json text;
 
 ALTER TABLE sessao_chat
+    ALTER COLUMN carrinho_json TYPE text,
+    ALTER COLUMN itens_pendentes_json TYPE text,
+    ALTER COLUMN item_pendente_json TYPE text;
+
+ALTER TABLE sessao_chat
 DROP CONSTRAINT IF EXISTS sessao_chat_estado_check;
 
 ALTER TABLE sessao_chat

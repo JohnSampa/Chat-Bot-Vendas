@@ -7,8 +7,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,13 +43,13 @@ public class SessaoChat {
 
     private String tipoProdutoInteresse;
 
-    @Lob
+    @Column(columnDefinition = "text")
     private String carrinhoJson;
 
-    @Lob
+    @Column(columnDefinition = "text")
     private String itensPendentesJson;
 
-    @Lob
+    @Column(columnDefinition = "text")
     private String itemPendenteJson;
 
 }

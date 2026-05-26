@@ -33,6 +33,10 @@ public class Venda {
     private Double total;
 
     public Double getTotal() {
+        if (produto == null || produto.getPreco() == null || quantidade == null) {
+            return 0.0;
+        }
+
         return total = produto.getPreco() * quantidade;
     }
 
