@@ -30,6 +30,14 @@ public class ProdutoService {
         }
     }
 
+    public Produto buscarProdutoPorId(Long id) {
+        if (id == null) {
+            return null;
+        }
+
+        return produtoRepository.findById(id).orElse(null);
+    }
+
     public Produto buscarProdutoPorIdMensagem(String mensagem, String tipoProdutoInteresse) {
         Produto produto = buscarProdutoPorIdMensagem(mensagem);
         if (produto == null || tipoProdutoInteresse == null || tipoProdutoInteresse.isBlank()) {

@@ -408,12 +408,9 @@ public class ChatBotService {
             );
         }
 
-        Produto produtoSelecionado = produtoService.buscarProdutoPorIdMensagem(mensagem);
-        if (produtoSelecionado == null || !produtoEstaNasOpcoes(produtoSelecionado, pendente)) {
-            produtoSelecionado = produtoService.buscarProdutoPorNomeExato(mensagem, null);
-        }
+        Produto produtoSelecionado = selecionarProdutoPendente(mensagem, pendente);
 
-        if (produtoSelecionado == null || !produtoEstaNasOpcoes(produtoSelecionado, pendente)) {
+        if (produtoSelecionado == null) {
             return respostaItemPendente(pendente, "Nao encontrei esse produto nas opcoes. Informe o id correto.");
         }
 
@@ -468,6 +465,49 @@ public class ChatBotService {
                 .map(Produto::getId)
                 .filter(Objects::nonNull)
                 .anyMatch(id -> id.equals(produto.getId()));
+    }
+
+    private Produto selecionarProdutoPendente(String mensagem, ItemPendente pendente) {
+        if (pendente == null || pendente.opcoes() == null || pendente.opcoes().isEmpty()) {
+            return null;
+        }
+
+        Long id = extrairId(mensagem);
+        if (id != null) {
+            Produto produtoOpcao = pendente.opcoes()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .filter(produto -> Objects.equals(produto.getId(), id))
+                    .findFirst()
+                    .orElse(null);
+
+            if (produtoOpcao != null) {
+                Produto produtoBanco = produtoService.buscarProdutoPorId(id);
+                return produtoBanco != null ? produtoBanco : produtoOpcao;
+            }
+
+            return null;
+        }
+
+        Produto produtoPorNome = produtoService.buscarProdutoPorNomeExato(mensagem, null);
+        if (produtoEstaNasOpcoes(produtoPorNome, pendente)) {
+            return produtoPorNome;
+        }
+
+        return null;
+    }
+
+    private Long extrairId(String mensagem) {
+        String idTexto = mensagem == null ? "" : mensagem.replaceAll("[^0-9]", "");
+        if (idTexto.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(idTexto);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private void limparSessao(SessaoChat sessao) {
