@@ -18,6 +18,7 @@ import unifan.chat_bot_vendas.repositories.SessaoChatRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_PRODUTO;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_PRODUTO;
@@ -440,6 +441,10 @@ public class ChatBotService {
     }
 
     private ChatbotResponse respostaItemPendente(ItemPendente pendente, String mensagem) {
+        if (pendente == null) {
+            return ChatbotResponse.mensagem("Nao encontrei o item pendente. Vamos recomecar a compra.");
+        }
+
         if (pendente.opcoes() == null || pendente.opcoes().isEmpty()) {
             return ChatbotResponse.mensagem("Nao encontrei produto para " + pendente.termo()
                     + ". Cadastre o produto ou tente informar um nome mais especifico.");
@@ -453,9 +458,16 @@ public class ChatBotService {
     }
 
     private boolean produtoEstaNasOpcoes(Produto produto, ItemPendente pendente) {
+        if (produto == null || produto.getId() == null || pendente == null || pendente.opcoes() == null) {
+            return false;
+        }
+
         return pendente.opcoes()
                 .stream()
-                .anyMatch(opcao -> opcao.getId().equals(produto.getId()));
+                .filter(Objects::nonNull)
+                .map(Produto::getId)
+                .filter(Objects::nonNull)
+                .anyMatch(id -> id.equals(produto.getId()));
     }
 
     private void limparSessao(SessaoChat sessao) {
