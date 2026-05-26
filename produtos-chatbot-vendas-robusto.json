@@ -1,28 +1,152 @@
 [
-  { "nome": "Camisa Polo Branca", "preco": 79.9, "tamanho": "P" },
-  { "nome": "Camisa Polo Preta", "preco": 79.9, "tamanho": "M" },
-  { "nome": "Camisa Social Azul", "preco": 119.9, "tamanho": "G" },
-  { "nome": "Camisa Basica Cinza", "preco": 49.9, "tamanho": "GG" },
-  { "nome": "Camisa Corinthians Branca", "preco": 189.9, "tamanho": "M" },
-  { "nome": "Camisa Corinthians Preta", "preco": 189.9, "tamanho": "G" },
-  { "nome": "Camiseta Corinthians Torcedor", "preco": 149.9, "tamanho": "M" },
-  { "nome": "Camiseta Basica Branca", "preco": 39.9, "tamanho": "P" },
-  { "nome": "Camiseta Basica Preta", "preco": 39.9, "tamanho": "G" },
-  { "nome": "Regata Branca", "preco": 34.9, "tamanho": "P" },
-  { "nome": "Regata Preta", "preco": 34.9, "tamanho": "M" },
-  { "nome": "Regata Esportiva Cinza", "preco": 44.9, "tamanho": "G" },
-  { "nome": "Calca Jeans Slim", "preco": 149.9, "tamanho": "P" },
-  { "nome": "Calca Jeans Reta", "preco": 159.9, "tamanho": "M" },
-  { "nome": "Calca Moletom Preta", "preco": 129.9, "tamanho": "G" },
-  { "nome": "Calca Sarja Bege", "preco": 139.9, "tamanho": "GG" },
-  { "nome": "Blusa Moletom Azul", "preco": 129.9, "tamanho": "P" },
-  { "nome": "Blusa de Frio Preta", "preco": 159.9, "tamanho": "M" },
-  { "nome": "Blusa Tricot Off White", "preco": 119.9, "tamanho": "G" },
-  { "nome": "Blusa Manga Longa Verde", "preco": 89.9, "tamanho": "GG" },
-  { "nome": "Sapato Social Preto", "preco": 199.9, "tamanho": "P" },
-  { "nome": "Sapato Casual Marrom", "preco": 179.9, "tamanho": "M" },
-  { "nome": "Sapato Oxford Preto", "preco": 229.9, "tamanho": "G" },
-  { "nome": "Sapato Mocassim Caramelo", "preco": 189.9, "tamanho": "GG" },
-  { "nome": "Tenis Casual Branco", "preco": 169.9, "tamanho": "M" },
-  { "nome": "Tenis Esportivo Preto", "preco": 219.9, "tamanho": "G" }
+  {
+    "nome": "Camisa Polo Branca",
+    "preco": 79.9,
+    "tamanho": "P"
+  },
+  {
+    "nome": "Camisa Polo Preta",
+    "preco": 79.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Camisa Social Azul",
+    "preco": 119.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Camisa Basica Cinza",
+    "preco": 49.9,
+    "tamanho": "GG"
+  },
+  {
+    "nome": "Camisa Corinthians Branca",
+    "preco": 189.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Camisa Corinthians Preta",
+    "preco": 189.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Camiseta Corinthians Torcedor",
+    "preco": 149.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Camiseta Basica Branca",
+    "preco": 39.9,
+    "tamanho": "P"
+  },
+  {
+    "nome": "Camiseta Basica Preta",
+    "preco": 39.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Regata Branca",
+    "preco": 34.9,
+    "tamanho": "P"
+  },
+  {
+    "nome": "Regata Preta",
+    "preco": 34.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Regata Esportiva Cinza",
+    "preco": 44.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Calca Jeans Slim",
+    "preco": 149.9,
+    "tamanho": "P"
+  },
+  {
+    "nome": "Calca Jeans Reta",
+    "preco": 159.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Calca Moletom Preta",
+    "preco": 129.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Calca Sarja Bege",
+    "preco": 139.9,
+    "tamanho": "GG"
+  },
+  {
+    "nome": "Blusa Moletom Azul",
+    "preco": 129.9,
+    "tamanho": "P"
+  },
+  {
+    "nome": "Blusa de Frio Preta",
+    "preco": 159.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Blusa Tricot Off White",
+    "preco": 119.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Blusa Manga Longa Verde",
+    "preco": 89.9,
+    "tamanho": "GG"
+  },
+  {
+    "nome": "Sapato Social Preto",
+    "preco": 199.9,
+    "tamanho": "P"
+  },
+  {
+    "nome": "Sapato Casual Marrom",
+    "preco": 179.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Sapato Oxford Preto",
+    "preco": 229.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Sapato Mocassim Caramelo",
+    "preco": 189.9,
+    "tamanho": "GG"
+  },
+  {
+    "nome": "Tenis Casual Branco",
+    "preco": 169.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Tenis Esportivo Preto",
+    "preco": 219.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Short Jeans Azul",
+    "preco": 89.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Short Tactel Preto",
+    "preco": 69.9,
+    "tamanho": "G"
+  },
+  {
+    "nome": "Short Esportivo Corinthians",
+    "preco": 99.9,
+    "tamanho": "M"
+  },
+  {
+    "nome": "Short Moletom Cinza",
+    "preco": 79.9,
+    "tamanho": "GG"
+  }
 ]

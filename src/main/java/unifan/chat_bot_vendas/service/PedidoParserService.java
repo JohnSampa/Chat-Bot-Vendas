@@ -13,8 +13,14 @@ import java.util.regex.Pattern;
 @Service
 public class PedidoParserService {
 
-    private static final Pattern ITEM_COM_QUANTIDADE = Pattern.compile(
-            "(\\d+|uma|um|duas|dois|tres|três|quatro|cinco|seis|sete|oito|nove|dez)\\s+([^,;]+?)(?=\\s+(?:e\\s+)?(?:\\d+|uma|um|duas|dois|tres|três|quatro|cinco|seis|sete|oito|nove|dez)\\s+|[,;]|$)"
+    private static final String QUANTIDADE = "\\d+|uma|um|duas|dois|tres|três|quatro|cinco|seis|sete|oito|nove|dez";
+
+    private static final Pattern QUANTIDADE_ANTES_PRODUTO = Pattern.compile(
+            "^(" + QUANTIDADE + ")\\s+(.+)$"
+    );
+
+    private static final Pattern PRODUTO_ANTES_QUANTIDADE = Pattern.compile(
+            "^(.+?)\\s+(" + QUANTIDADE + ")(?:\\s+.*)?$"
     );
 
     private static final Map<String, Integer> NUMEROS = Map.ofEntries(
@@ -35,19 +41,54 @@ public class PedidoParserService {
 
     public List<ItemPedidoExtraido> extrairItens(String mensagem) {
         String texto = limparComandosCompra(normalizar(mensagem));
-        Matcher matcher = ITEM_COM_QUANTIDADE.matcher(texto);
         List<ItemPedidoExtraido> itens = new ArrayList<>();
 
-        while (matcher.find()) {
-            Integer quantidade = converterQuantidade(matcher.group(1));
-            String termo = limparTermo(matcher.group(2));
-
-            if (quantidade != null && quantidade > 0 && !termo.isBlank()) {
-                itens.add(new ItemPedidoExtraido(termo, quantidade));
+        for (String trecho : quebrarEmTrechos(texto)) {
+            ItemPedidoExtraido item = extrairItem(trecho);
+            if (item != null && itens.stream().noneMatch(i ->
+                    i.termo().equals(item.termo()) && i.quantidade().equals(item.quantidade()))) {
+                itens.add(item);
             }
         }
 
         return itens;
+    }
+
+    private List<String> quebrarEmTrechos(String texto) {
+        String textoQuebrado = texto
+                .replaceAll("\\s+e\\s+(?=(?:" + QUANTIDADE + ")\\s+)", ",")
+                .replaceAll("\\s+e\\s+(?=[a-z]+(?:\\s+[a-z]+)*\\s+(?:" + QUANTIDADE + "))", ",");
+
+        return List.of(textoQuebrado.split("[,;]+"))
+                .stream()
+                .map(String::trim)
+                .filter(trecho -> !trecho.isBlank())
+                .toList();
+    }
+
+    private ItemPedidoExtraido extrairItem(String trecho) {
+        Matcher quantidadeAntes = QUANTIDADE_ANTES_PRODUTO.matcher(trecho);
+        if (quantidadeAntes.matches()) {
+            return montarItem(quantidadeAntes.group(1), quantidadeAntes.group(2));
+        }
+
+        Matcher produtoAntes = PRODUTO_ANTES_QUANTIDADE.matcher(trecho);
+        if (produtoAntes.matches()) {
+            return montarItem(produtoAntes.group(2), produtoAntes.group(1));
+        }
+
+        return null;
+    }
+
+    private ItemPedidoExtraido montarItem(String quantidadeTexto, String termoTexto) {
+        Integer quantidade = converterQuantidade(quantidadeTexto);
+        String termo = limparTermo(termoTexto);
+
+        if (quantidade == null || quantidade <= 0 || termo.isBlank()) {
+            return null;
+        }
+
+        return new ItemPedidoExtraido(termo, quantidade);
     }
 
     private Integer converterQuantidade(String texto) {
