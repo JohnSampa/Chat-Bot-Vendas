@@ -7,7 +7,11 @@ import unifan.chat_bot_vendas.domain.Produto;
 import unifan.chat_bot_vendas.domain.SessaoChat;
 import unifan.chat_bot_vendas.domain.Venda;
 import unifan.chat_bot_vendas.domain.enums.TipoAcao;
+import unifan.chat_bot_vendas.dto.CarrinhoResponse;
 import unifan.chat_bot_vendas.dto.ChatbotResponse;
+import unifan.chat_bot_vendas.dto.ItemCarrinho;
+import unifan.chat_bot_vendas.dto.ItemPedidoExtraido;
+import unifan.chat_bot_vendas.dto.ItemPendente;
 import unifan.chat_bot_vendas.dto.enums.TipoResposta;
 import unifan.chat_bot_vendas.exceptions.BusinessException;
 import unifan.chat_bot_vendas.repositories.SessaoChatRepository;
@@ -18,7 +22,9 @@ import java.util.List;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_PRODUTO;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_PRODUTO;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_COMPRA;
+import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_CARRINHO;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_QUANTIDADE;
+import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_RESOLUCAO_ITEM;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.INICIAL;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.SAIR_COMPRA;
 import static unifan.chat_bot_vendas.domain.enums.TipoAcao.SAIR_CHAT_VENDA;
@@ -42,6 +48,12 @@ public class ChatBotService {
     @Autowired
     private ChatBotComandosService chatBotComandosService;
 
+    @Autowired
+    private PedidoParserService pedidoParserService;
+
+    @Autowired
+    private CarrinhoService carrinhoService;
+
     public ChatbotResponse reiniciarConversa() {
         SessaoChat sessao = sessaoRepository.findByUserid(1L)
                 .orElse(new SessaoChat());
@@ -50,6 +62,7 @@ public class ChatBotService {
         sessao.setProduto(null);
         sessao.setQuantidade(null);
         sessao.setTipoProdutoInteresse(null);
+        carrinhoService.limpar(sessao);
         sessao.setUltimaAtualizacao(LocalDateTime.now());
 
         if (sessao.getUserid() == null) {
@@ -78,6 +91,11 @@ public class ChatBotService {
             return continuarSessao(sessao, mensagem.toLowerCase().trim());
         }
 
+        List<ItemPedidoExtraido> itensExtraidos = pedidoParserService.extrairItens(mensagem);
+        if (!itensExtraidos.isEmpty()) {
+            return iniciarPedidoComItens(sessao, itensExtraidos);
+        }
+
         Intencao intencao = intencaoService.detectarIntencao(msg);
 
         if (intencao == null) {
@@ -102,6 +120,11 @@ public class ChatBotService {
 
         if (intencao != null && intencao.getTipoAcao() == SAIR_CHAT_VENDA) {
             return chatBotComandosService.executarComandos(intencao, sessao);
+        }
+
+        List<ItemPedidoExtraido> itensExtraidos = pedidoParserService.extrairItens(mensagem);
+        if (!itensExtraidos.isEmpty()) {
+            return iniciarPedidoComItens(sessao, itensExtraidos);
         }
 
         return switch (sessao.getEstado()) {
@@ -193,6 +216,38 @@ public class ChatBotService {
                         sessao.getProduto()
                 );
             }
+            case AGUARDANDO_RESOLUCAO_ITEM -> resolverItemPendente(sessao, mensagem);
+            case AGUARDANDO_CONFIRMACAO_CARRINHO -> {
+                if (mensagem.contains("confirmo") || mensagem.contains("sim") || mensagem.contains("confirmar")) {
+                    List<ItemCarrinho> itens = carrinhoService.getItens(sessao);
+                    var vendas = vendaService.processarVendas(itens);
+                    CarrinhoResponse carrinho = carrinhoService.montarResponse(sessao);
+
+                    limparSessao(sessao);
+                    sessaoRepository.save(sessao);
+
+                    yield new ChatbotResponse(
+                            TipoResposta.VENDA_MENSAGEM,
+                            "Venda realizada com sucesso!",
+                            vendas,
+                            carrinho
+                    );
+                } else if (mensagem.contains("cancelar") || mensagem.contains("nao") || mensagem.contains("não")
+                        || mensagem.contains("parar")) {
+                    limparSessao(sessao);
+                    sessaoRepository.save(sessao);
+                    yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
+                }
+
+                sessao.setUltimaAtualizacao(LocalDateTime.now());
+                sessaoRepository.save(sessao);
+                yield new ChatbotResponse(
+                        TipoResposta.PRODUTO_MENSAGEM,
+                        "Confirma a compra dos itens do carrinho? Responda sim ou nao.",
+                        null,
+                        carrinhoService.montarResponse(sessao)
+                );
+            }
             case AGUARDANDO_QUANTIDADE -> {
                 try {
                     int qty = Integer.parseInt(mensagem.replaceAll("[^0-9]", ""));
@@ -225,11 +280,7 @@ public class ChatBotService {
                 if (mensagem.contains("confirmo") || mensagem.contains("sim") || mensagem.contains("confirmar")) {
                     Venda venda = vendaService.processarVenda(sessao.getProduto(), sessao.getQuantidade());
 
-                    sessao.setProduto(null);
-                    sessao.setQuantidade(null);
-                    sessao.setTipoProdutoInteresse(null);
-                    sessao.setEstado(INICIAL);
-                    sessao.setUltimaAtualizacao(LocalDateTime.now());
+                    limparSessao(sessao);
                     sessaoRepository.save(sessao);
 
                     yield new ChatbotResponse(
@@ -245,6 +296,7 @@ public class ChatBotService {
                     sessao.setProduto(null);
                     sessao.setQuantidade(null);
                     sessao.setTipoProdutoInteresse(null);
+                    carrinhoService.limpar(sessao);
                     sessao.setUltimaAtualizacao(LocalDateTime.now());
                     sessaoRepository.save(sessao);
                     yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
@@ -259,6 +311,7 @@ public class ChatBotService {
                 sessao.setProduto(null);
                 sessao.setQuantidade(null);
                 sessao.setTipoProdutoInteresse(null);
+                carrinhoService.limpar(sessao);
                 sessao.setUltimaAtualizacao(LocalDateTime.now());
                 sessaoRepository.save(sessao);
                 yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
@@ -268,6 +321,7 @@ public class ChatBotService {
                 sessao.setProduto(null);
                 sessao.setQuantidade(null);
                 sessao.setTipoProdutoInteresse(null);
+                carrinhoService.limpar(sessao);
                 sessao.setUltimaAtualizacao(LocalDateTime.now());
                 sessaoRepository.save(sessao);
                 yield ChatbotResponse
@@ -292,5 +346,124 @@ public class ChatBotService {
                 null,
                 produto
         );
+    }
+
+    private ChatbotResponse iniciarPedidoComItens(SessaoChat sessao, List<ItemPedidoExtraido> itensExtraidos) {
+        limparSessao(sessao);
+
+        List<ItemPendente> pendentes = new java.util.ArrayList<>();
+
+        for (ItemPedidoExtraido item : itensExtraidos) {
+            Produto produtoExato = produtoService.buscarProdutoPorNomeExato(item.termo(), null);
+            if (produtoExato != null) {
+                carrinhoService.adicionarItem(sessao, produtoExato, item.quantidade());
+                continue;
+            }
+
+            List<Produto> candidatos = produtoService.buscarCandidatosPorTermo(item.termo(), null);
+            if (candidatos.size() == 1) {
+                carrinhoService.adicionarItem(sessao, candidatos.get(0), item.quantidade());
+            } else {
+                if (candidatos.isEmpty()) {
+                    candidatos = produtoService.buscarProdutos();
+                }
+                pendentes.add(new ItemPendente(item.termo(), item.quantidade(), candidatos));
+            }
+        }
+
+        carrinhoService.salvarPendentes(sessao, pendentes);
+        ItemPendente pendente = carrinhoService.proximoPendente(sessao);
+
+        if (pendente != null) {
+            sessao.setEstado(AGUARDANDO_RESOLUCAO_ITEM);
+            sessao.setUltimaAtualizacao(LocalDateTime.now());
+            sessaoRepository.save(sessao);
+            return respostaItemPendente(pendente, "Para " + pendente.quantidade() + "x " + pendente.termo()
+                    + ", escolha o id do produto correto.");
+        }
+
+        sessao.setEstado(AGUARDANDO_CONFIRMACAO_CARRINHO);
+        sessao.setUltimaAtualizacao(LocalDateTime.now());
+        sessaoRepository.save(sessao);
+
+        return new ChatbotResponse(
+                TipoResposta.PRODUTO_MENSAGEM,
+                "Montei seu pedido. Confirma a compra?",
+                null,
+                carrinhoService.montarResponse(sessao)
+        );
+    }
+
+    private ChatbotResponse resolverItemPendente(SessaoChat sessao, String mensagem) {
+        ItemPendente pendente = carrinhoService.getItemPendente(sessao);
+        if (pendente == null) {
+            sessao.setEstado(AGUARDANDO_CONFIRMACAO_CARRINHO);
+            sessaoRepository.save(sessao);
+            return new ChatbotResponse(
+                    TipoResposta.PRODUTO_MENSAGEM,
+                    "Confirma a compra dos itens do carrinho?",
+                    null,
+                    carrinhoService.montarResponse(sessao)
+            );
+        }
+
+        Produto produtoSelecionado = produtoService.buscarProdutoPorIdMensagem(mensagem);
+        if (produtoSelecionado == null || !produtoEstaNasOpcoes(produtoSelecionado, pendente)) {
+            produtoSelecionado = produtoService.buscarProdutoPorNomeExato(mensagem, null);
+        }
+
+        if (produtoSelecionado == null || !produtoEstaNasOpcoes(produtoSelecionado, pendente)) {
+            return respostaItemPendente(pendente, "Nao encontrei esse produto nas opcoes. Informe o id correto.");
+        }
+
+        carrinhoService.adicionarItem(sessao, produtoSelecionado, pendente.quantidade());
+        ItemPendente proximo = carrinhoService.proximoPendente(sessao);
+
+        if (proximo != null) {
+            sessao.setEstado(AGUARDANDO_RESOLUCAO_ITEM);
+            sessao.setUltimaAtualizacao(LocalDateTime.now());
+            sessaoRepository.save(sessao);
+            return respostaItemPendente(proximo, "Agora escolha o produto para "
+                    + proximo.quantidade() + "x " + proximo.termo() + ".");
+        }
+
+        sessao.setEstado(AGUARDANDO_CONFIRMACAO_CARRINHO);
+        sessao.setUltimaAtualizacao(LocalDateTime.now());
+        sessaoRepository.save(sessao);
+
+        return new ChatbotResponse(
+                TipoResposta.PRODUTO_MENSAGEM,
+                "Montei seu pedido. Confirma a compra?",
+                null,
+                carrinhoService.montarResponse(sessao)
+        );
+    }
+
+    private ChatbotResponse respostaItemPendente(ItemPendente pendente, String mensagem) {
+        if (pendente.opcoes() == null || pendente.opcoes().isEmpty()) {
+            return ChatbotResponse.mensagem("Nao encontrei produto para " + pendente.termo()
+                    + ". Cadastre o produto ou tente informar um nome mais especifico.");
+        }
+
+        return ChatbotResponse.listaMensagem(
+                TipoResposta.LISTA_PRODUTOS_MENSAGEM,
+                pendente.opcoes(),
+                mensagem
+        );
+    }
+
+    private boolean produtoEstaNasOpcoes(Produto produto, ItemPendente pendente) {
+        return pendente.opcoes()
+                .stream()
+                .anyMatch(opcao -> opcao.getId().equals(produto.getId()));
+    }
+
+    private void limparSessao(SessaoChat sessao) {
+        sessao.setEstado(INICIAL);
+        sessao.setProduto(null);
+        sessao.setQuantidade(null);
+        sessao.setTipoProdutoInteresse(null);
+        sessao.setUltimaAtualizacao(LocalDateTime.now());
+        carrinhoService.limpar(sessao);
     }
 }

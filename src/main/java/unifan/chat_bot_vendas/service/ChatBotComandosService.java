@@ -27,12 +27,16 @@ public class ChatBotComandosService {
     @Autowired
     private SessaoChatRepository sessaoChatRepository;
 
+    @Autowired
+    private CarrinhoService carrinhoService;
+
     public ChatbotResponse executarComandos(Intencao intencao, SessaoChat sessao){
 
         return switch (intencao.getTipoAcao()){
             case INICIAR_COMPRA -> {
                 sessao.setEstado(EstadoSessao.AGUARDANDO_PRODUTO);
                 sessao.setTipoProdutoInteresse(null);
+                carrinhoService.limpar(sessao);
                 sessao.setUltimaAtualizacao(LocalDateTime.now());
                 sessaoChatRepository.save(sessao);
 
@@ -58,6 +62,7 @@ public class ChatBotComandosService {
                     sessao.setProduto(null);
                     sessao.setQuantidade(null);
                     sessao.setTipoProdutoInteresse(null);
+                    carrinhoService.limpar(sessao);
                     sessao.setUltimaAtualizacao(LocalDateTime.now());
                     sessaoChatRepository.save(sessao);
                     yield ChatbotResponse.mensagem(intencao.getResposta()+"\n Cancelando compra...");
@@ -87,6 +92,7 @@ public class ChatBotComandosService {
             sessao.setProduto(null);
             sessao.setQuantidade(null);
             sessao.setTipoProdutoInteresse(null);
+            carrinhoService.limpar(sessao);
             sessao.setUltimaAtualizacao(LocalDateTime.now());
             sessaoChatRepository.save(sessao);
 
@@ -100,6 +106,7 @@ public class ChatBotComandosService {
         sessao.setProduto(null);
         sessao.setQuantidade(null);
         sessao.setTipoProdutoInteresse(nomeProduto);
+        carrinhoService.limpar(sessao);
         sessao.setEstado(EstadoSessao.AGUARDANDO_PRODUTO);
         sessao.setUltimaAtualizacao(LocalDateTime.now());
         sessaoChatRepository.save(sessao);

@@ -22,6 +22,13 @@ public class VendaService {
         return venda;
     }
 
+    public List<Venda> processarVendas(List<unifan.chat_bot_vendas.dto.ItemCarrinho> itens) {
+        return itens
+                .stream()
+                .map(item -> processarVenda(item.produto(), item.quantidade()))
+                .toList();
+    }
+
     public List<Venda> getVendas(){
         return vendaRepository.findAll();
     }

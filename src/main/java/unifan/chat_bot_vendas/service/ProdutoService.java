@@ -36,7 +36,7 @@ public class ProdutoService {
             return produto;
         }
 
-        if (normalizar(produto.getNome()).contains(normalizar(tipoProdutoInteresse))) {
+        if (normalizarTermoProduto(produto.getNome()).contains(normalizarTermoProduto(tipoProdutoInteresse))) {
             return produto;
         }
 
@@ -44,23 +44,27 @@ public class ProdutoService {
     }
 
     public Produto buscarProdutoPorNomeExato(String mensagem, String tipoProdutoInteresse) {
-        String mensagemNormalizada = normalizar(mensagem);
+        String mensagemNormalizada = normalizarTermoProduto(mensagem);
         if (mensagemNormalizada.isBlank()) {
             return null;
         }
 
         return produtosPorTipoInteresse(tipoProdutoInteresse)
                 .stream()
-                .filter(produto -> normalizar(produto.getNome()).equals(mensagemNormalizada))
+                .filter(produto -> normalizarTermoProduto(produto.getNome()).equals(mensagemNormalizada))
                 .findFirst()
                 .orElse(null);
     }
 
     public String detectarTipoProdutoInteresse(String mensagem) {
-        String mensagemNormalizada = normalizar(mensagem);
+        String mensagemNormalizada = normalizarTermoProduto(mensagem);
 
         if (mensagemNormalizada.equals("camisa") || mensagemNormalizada.equals("camiseta")) {
             return "camisa";
+        }
+
+        if (mensagemNormalizada.equals("regata")) {
+            return "regata";
         }
 
         if (mensagemNormalizada.equals("calca")) {
@@ -80,12 +84,12 @@ public class ProdutoService {
     }
 
     public Produto buscarProdutoMaisProximoPorMensagem(String mensagem, String tipoProdutoInteresse) {
-        String mensagemNormalizada = normalizar(mensagem);
+        String mensagemNormalizada = normalizarTermoProduto(mensagem);
         if (mensagemNormalizada.isBlank()) {
             return null;
         }
 
-        if (tipoProdutoInteresse != null && mensagemNormalizada.equals(normalizar(tipoProdutoInteresse))) {
+        if (tipoProdutoInteresse != null && mensagemNormalizada.equals(normalizarTermoProduto(tipoProdutoInteresse))) {
             return null;
         }
 
@@ -93,8 +97,8 @@ public class ProdutoService {
 
         List<ProdutoScore> scores = produtos
                 .stream()
-                .map(produto -> new ProdutoScore(produto, calcularScore(mensagemNormalizada, normalizar(produto.getNome()))))
-                .filter(produtoScore -> produtoScore.score() <= 2)
+                .map(produto -> new ProdutoScore(produto, calcularScore(mensagemNormalizada, normalizarTermoProduto(produto.getNome()))))
+                .filter(produtoScore -> produtoScore.score() <= 3)
                 .sorted(Comparator.comparingInt(ProdutoScore::score))
                 .toList();
 
@@ -121,28 +125,43 @@ public class ProdutoService {
         List<Produto> produtos = produtoRepository.findAll();
         Optional<Produto> produto = produtos
                 .stream()
-                .filter(produto1 -> normalizar(mensagem).contains(normalizar(produto1.getNome())))
+                .filter(produto1 -> normalizarTermoProduto(mensagem).contains(normalizarTermoProduto(produto1.getNome())))
                 .findFirst();
 
         return produto.orElse(null);
     }
 
     public Produto buscarProdutoPorNomeParcial(String nomeProduto) {
-        String nomeNormalizado = normalizar(nomeProduto);
+        String nomeNormalizado = normalizarTermoProduto(nomeProduto);
         List<Produto> produtos = produtoRepository.findAll();
         Optional<Produto> produto = produtos
                 .stream()
-                .filter(produto1 -> normalizar(produto1.getNome()).contains(nomeNormalizado))
+                .filter(produto1 -> normalizarTermoProduto(produto1.getNome()).contains(nomeNormalizado))
                 .findFirst();
 
         return produto.orElse(null);
     }
 
     public List<Produto> buscarProdutosPorNomeParcial(String nomeProduto) {
-        String nomeNormalizado = normalizar(nomeProduto);
+        String nomeNormalizado = normalizarTermoProduto(nomeProduto);
         return produtoRepository.findAll()
                 .stream()
-                .filter(produto -> normalizar(produto.getNome()).contains(nomeNormalizado))
+                .filter(produto -> normalizarTermoProduto(produto.getNome()).contains(nomeNormalizado))
+                .toList();
+    }
+
+    public List<Produto> buscarCandidatosPorTermo(String termo, String tipoProdutoInteresse) {
+        String termoNormalizado = normalizarTermoProduto(termo);
+        if (termoNormalizado.isBlank()) {
+            return List.of();
+        }
+
+        return produtosPorTipoInteresse(tipoProdutoInteresse)
+                .stream()
+                .map(produto -> new ProdutoScore(produto, calcularScore(termoNormalizado, normalizarTermoProduto(produto.getNome()))))
+                .filter(produtoScore -> produtoScore.score() <= 3)
+                .sorted(Comparator.comparingInt(ProdutoScore::score))
+                .map(ProdutoScore::produto)
                 .toList();
     }
 
@@ -167,6 +186,34 @@ public class ProdutoService {
                 .replaceAll("\\p{M}", "")
                 .replaceAll("[^a-z0-9\\s]", "")
                 .trim();
+    }
+
+    private String normalizarTermoProduto(String texto) {
+        String normalizado = normalizar(texto);
+
+        return Arrays.stream(normalizado.split("\\s+"))
+                .map(this::normalizarTokenProduto)
+                .filter(token -> !token.isBlank())
+                .reduce("", (acc, token) -> acc.isBlank() ? token : acc + " " + token);
+    }
+
+    private String normalizarTokenProduto(String token) {
+        return switch (token) {
+            case "camisetas", "camiseta" -> "camiseta";
+            case "regatas", "regata" -> "regata";
+            case "calcas" -> "calca";
+            case "sapatos" -> "sapato";
+            case "calcados", "calcado", "tenis" -> "sapato";
+            case "blusas" -> "blusa";
+            default -> removerPluralSimples(token);
+        };
+    }
+
+    private String removerPluralSimples(String token) {
+        if (token.length() > 4 && token.endsWith("s")) {
+            return token.substring(0, token.length() - 1);
+        }
+        return token;
     }
 
     private List<Produto> produtosPorTipoInteresse(String tipoProdutoInteresse) {
