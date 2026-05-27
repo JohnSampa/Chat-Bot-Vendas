@@ -50,10 +50,22 @@ public class IntencaoService {
     }
 
     public List<Intencao> salveAll(List<Intencao> intencoes) {
-        intencoes.forEach(intencao -> intencao
-                .getPalavrasChaves()
-                .forEach(palavra -> palavra.setIntencao(intencao))
-        );
+        if (intencoes == null || intencoes.isEmpty()) {
+            throw new BusinessException("Informe ao menos uma intencao para salvar");
+        }
+
+        intencoes.forEach(intencao -> {
+            intencao.setId(null);
+
+            if (intencao.getPalavrasChaves() == null) {
+                intencao.setPalavrasChaves(new ArrayList<>());
+            }
+
+            intencao.getPalavrasChaves().forEach(palavra -> {
+                palavra.setId(null);
+                palavra.setIntencao(intencao);
+            });
+        });
         return intencaoRepository.saveAll(intencoes);
     }
 
