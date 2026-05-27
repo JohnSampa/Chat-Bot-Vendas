@@ -1,0 +1,170 @@
+[
+  {
+    "intencao": "Pagamento via PIX",
+    "resposta": "Perfeito. Para pagamento via PIX, informe o nome do pagador ou CPF/CNPJ para identificacao.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "pix" },
+      { "palavraChave": "pagar no pix" },
+      { "palavraChave": "vou pagar no pix" },
+      { "palavraChave": "quero pagar no pix" },
+      { "palavraChave": "pagamento pix" },
+      { "palavraChave": "forma de pagamento pix" },
+      { "palavraChave": "transferencia pix" },
+      { "palavraChave": "chave pix" },
+      { "palavraChave": "manda o pix" },
+      { "palavraChave": "pode ser pix" },
+      { "palavraChave": "vai ser pix" },
+      { "palavraChave": "fechar no pix" },
+      { "palavraChave": "finalizar no pix" },
+      { "palavraChave": "vou passar pix" },
+      { "palavraChave": "pago via pix" }
+    ]
+  },
+  {
+    "intencao": "Pagamento via cartao",
+    "resposta": "Certo. Para pagamento no cartao, informe se e debito ou credito e os ultimos 4 digitos do cartao.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "cartao" },
+      { "palavraChave": "cartao de credito" },
+      { "palavraChave": "cartao de debito" },
+      { "palavraChave": "credito" },
+      { "palavraChave": "debito" },
+      { "palavraChave": "pagar no cartao" },
+      { "palavraChave": "vou pagar no cartao" },
+      { "palavraChave": "quero pagar no cartao" },
+      { "palavraChave": "pagamento no cartao" },
+      { "palavraChave": "forma de pagamento cartao" },
+      { "palavraChave": "pode ser cartao" },
+      { "palavraChave": "vai ser cartao" },
+      { "palavraChave": "fechar no cartao" },
+      { "palavraChave": "finalizar no cartao" },
+      { "palavraChave": "passar no credito" },
+      { "palavraChave": "passar no debito" },
+      { "palavraChave": "maquininha" },
+      { "palavraChave": "maquina de cartao" }
+    ]
+  },
+  {
+    "intencao": "Pagamento em dinheiro",
+    "resposta": "Certo. Para pagamento em dinheiro, informe se e sem troco ou qual valor sera entregue.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "dinheiro" },
+      { "palavraChave": "em dinheiro" },
+      { "palavraChave": "pagar em dinheiro" },
+      { "palavraChave": "vou pagar em dinheiro" },
+      { "palavraChave": "quero pagar em dinheiro" },
+      { "palavraChave": "pagamento em dinheiro" },
+      { "palavraChave": "forma de pagamento dinheiro" },
+      { "palavraChave": "pode ser dinheiro" },
+      { "palavraChave": "vai ser dinheiro" },
+      { "palavraChave": "fechar em dinheiro" },
+      { "palavraChave": "finalizar em dinheiro" },
+      { "palavraChave": "pagar em especie" },
+      { "palavraChave": "especie" },
+      { "palavraChave": "sem troco" },
+      { "palavraChave": "nao precisa de troco" },
+      { "palavraChave": "precisa de troco" },
+      { "palavraChave": "troco para" }
+    ]
+  },
+  {
+    "intencao": "Dados de pagamento PIX",
+    "resposta": "Identificacao do PIX recebida. Vou finalizar a venda.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "cpf do pix" },
+      { "palavraChave": "cnpj do pix" },
+      { "palavraChave": "nome do pagador" },
+      { "palavraChave": "pagador" },
+      { "palavraChave": "comprovante pix" },
+      { "palavraChave": "nome no pix" },
+      { "palavraChave": "identificacao pix" },
+      { "palavraChave": "pix em nome de" },
+      { "palavraChave": "enviei o pix" },
+      { "palavraChave": "pix enviado" },
+      { "palavraChave": "pix feito" },
+      { "palavraChave": "ja fiz o pix" }
+    ]
+  },
+  {
+    "intencao": "Dados de pagamento cartao",
+    "resposta": "Dados do cartao recebidos. Vou finalizar a venda.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "credito final" },
+      { "palavraChave": "debito final" },
+      { "palavraChave": "ultimos 4 digitos" },
+      { "palavraChave": "final do cartao" },
+      { "palavraChave": "cartao final" },
+      { "palavraChave": "credito 1234" },
+      { "palavraChave": "debito 1234" },
+      { "palavraChave": "passou no credito" },
+      { "palavraChave": "passou no debito" },
+      { "palavraChave": "cartao aprovado" },
+      { "palavraChave": "pagamento aprovado no cartao" }
+    ]
+  },
+  {
+    "intencao": "Dados de pagamento dinheiro",
+    "resposta": "Dados do pagamento em dinheiro recebidos. Vou finalizar a venda.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "sem troco" },
+      { "palavraChave": "nao precisa troco" },
+      { "palavraChave": "nao precisa de troco" },
+      { "palavraChave": "troco para 100" },
+      { "palavraChave": "troco para 200" },
+      { "palavraChave": "vai entregar 100" },
+      { "palavraChave": "vai entregar 200" },
+      { "palavraChave": "cliente entregou" },
+      { "palavraChave": "valor entregue" },
+      { "palavraChave": "pagou em dinheiro" },
+      { "palavraChave": "dinheiro recebido" }
+    ]
+  },
+  {
+    "intencao": "Alterar forma de pagamento",
+    "resposta": "Tudo bem. Informe a nova forma de pagamento: pix, cartao ou dinheiro.",
+    "tipoAcao": null,
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "mudar pagamento" },
+      { "palavraChave": "alterar pagamento" },
+      { "palavraChave": "trocar pagamento" },
+      { "palavraChave": "trocar forma de pagamento" },
+      { "palavraChave": "mudar forma de pagamento" },
+      { "palavraChave": "nao vai ser pix" },
+      { "palavraChave": "nao vai ser cartao" },
+      { "palavraChave": "nao vai ser dinheiro" },
+      { "palavraChave": "prefiro pagar de outro jeito" },
+      { "palavraChave": "vou pagar de outra forma" }
+    ]
+  },
+  {
+    "intencao": "Cancelar pagamento ou venda",
+    "resposta": "Tudo bem, compra cancelada.",
+    "tipoAcao": "SAIR_CHAT_VENDA",
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "cancelar pagamento" },
+      { "palavraChave": "cancelar venda" },
+      { "palavraChave": "cancelar compra" },
+      { "palavraChave": "desistir do pagamento" },
+      { "palavraChave": "desistir da compra" },
+      { "palavraChave": "nao quero pagar" },
+      { "palavraChave": "nao quero finalizar" },
+      { "palavraChave": "parar compra" },
+      { "palavraChave": "encerrar compra" },
+      { "palavraChave": "sair da compra" }
+    ]
+  }
+]

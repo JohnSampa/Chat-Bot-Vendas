@@ -17,18 +17,28 @@ public class VendaService {
     private VendaRepository vendaRepository;
 
     public Venda processarVenda(Produto produto,Integer quantidade){
+        return processarVenda(produto, quantidade, null, null);
+    }
+
+    public Venda processarVenda(Produto produto, Integer quantidade, String formaPagamento, String dadosPagamento){
         Venda venda = new Venda();
         venda.setProduto(produto);
         venda.setQuantidade(quantidade);
         venda.setUserid(USER_ID_PADRAO);
+        venda.setFormaPagamento(formaPagamento);
+        venda.setDadosPagamento(dadosPagamento);
         venda = vendaRepository.save(venda);
         return venda;
     }
 
     public List<Venda> processarVendas(List<unifan.chat_bot_vendas.dto.ItemCarrinho> itens) {
+        return processarVendas(itens, null, null);
+    }
+
+    public List<Venda> processarVendas(List<unifan.chat_bot_vendas.dto.ItemCarrinho> itens, String formaPagamento, String dadosPagamento) {
         return itens
                 .stream()
-                .map(item -> processarVenda(item.produto(), item.quantidade()))
+                .map(item -> processarVenda(item.produto(), item.quantidade(), formaPagamento, dadosPagamento))
                 .toList();
     }
 

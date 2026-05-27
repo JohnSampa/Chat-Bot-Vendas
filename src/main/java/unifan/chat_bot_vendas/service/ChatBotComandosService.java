@@ -36,6 +36,8 @@ public class ChatBotComandosService {
             case INICIAR_COMPRA -> {
                 sessao.setEstado(EstadoSessao.AGUARDANDO_PRODUTO);
                 sessao.setTipoProdutoInteresse(null);
+                sessao.setFormaPagamento(null);
+                sessao.setDadosPagamento(null);
                 carrinhoService.limpar(sessao);
                 sessao.setUltimaAtualizacao(LocalDateTime.now());
                 sessaoChatRepository.save(sessao);
@@ -62,6 +64,8 @@ public class ChatBotComandosService {
                     sessao.setProduto(null);
                     sessao.setQuantidade(null);
                     sessao.setTipoProdutoInteresse(null);
+                    sessao.setFormaPagamento(null);
+                    sessao.setDadosPagamento(null);
                     carrinhoService.limpar(sessao);
                     sessao.setUltimaAtualizacao(LocalDateTime.now());
                     sessaoChatRepository.save(sessao);
@@ -92,6 +96,8 @@ public class ChatBotComandosService {
             sessao.setProduto(null);
             sessao.setQuantidade(null);
             sessao.setTipoProdutoInteresse(null);
+            sessao.setFormaPagamento(null);
+            sessao.setDadosPagamento(null);
             carrinhoService.limpar(sessao);
             sessao.setUltimaAtualizacao(LocalDateTime.now());
             sessaoChatRepository.save(sessao);
@@ -106,6 +112,8 @@ public class ChatBotComandosService {
         sessao.setProduto(null);
         sessao.setQuantidade(null);
         sessao.setTipoProdutoInteresse(nomeProduto);
+        sessao.setFormaPagamento(null);
+        sessao.setDadosPagamento(null);
         carrinhoService.limpar(sessao);
         sessao.setEstado(EstadoSessao.AGUARDANDO_PRODUTO);
         sessao.setUltimaAtualizacao(LocalDateTime.now());

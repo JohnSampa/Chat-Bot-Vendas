@@ -52,4 +52,9 @@ public class SessaoChat {
     @Column(columnDefinition = "text")
     private String itemPendenteJson;
 
+    private String formaPagamento;
+
+    @Column(columnDefinition = "text")
+    private String dadosPagamento;
+
 }

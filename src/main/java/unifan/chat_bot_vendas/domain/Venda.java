@@ -34,6 +34,10 @@ public class Venda {
 
     private Long userid;
 
+    private String formaPagamento;
+
+    private String dadosPagamento;
+
     public Double getTotal() {
         if (produto == null || produto.getPreco() == null || quantidade == null) {
             return 0.0;

@@ -25,6 +25,8 @@ import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_PRODUT
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_PRODUTO;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_COMPRA;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_CONFIRMACAO_CARRINHO;
+import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_DADOS_PAGAMENTO;
+import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_FORMA_PAGAMENTO;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_QUANTIDADE;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.AGUARDANDO_RESOLUCAO_ITEM;
 import static unifan.chat_bot_vendas.domain.enums.EstadoSessao.INICIAL;
@@ -64,6 +66,8 @@ public class ChatBotService {
         sessao.setProduto(null);
         sessao.setQuantidade(null);
         sessao.setTipoProdutoInteresse(null);
+        sessao.setFormaPagamento(null);
+        sessao.setDadosPagamento(null);
         carrinhoService.limpar(sessao);
         sessao.setUltimaAtualizacao(LocalDateTime.now());
 
@@ -225,19 +229,7 @@ public class ChatBotService {
             case AGUARDANDO_RESOLUCAO_ITEM -> resolverItemPendente(sessao, mensagem);
             case AGUARDANDO_CONFIRMACAO_CARRINHO -> {
                 if (isConfirmacao(mensagem)) {
-                    List<ItemCarrinho> itens = carrinhoService.getItens(sessao);
-                    var vendas = vendaService.processarVendas(itens);
-                    CarrinhoResponse carrinho = carrinhoService.montarResponse(sessao);
-
-                    limparSessao(sessao);
-                    sessaoRepository.save(sessao);
-
-                    yield new ChatbotResponse(
-                            TipoResposta.VENDA_MENSAGEM,
-                            "Venda realizada com sucesso!",
-                            vendas,
-                            carrinho
-                    );
+                    yield iniciarPagamento(sessao);
                 } else if (isCancelamento(mensagem) || isRespostaNegativaParaConfirmacao(mensagem)) {
                     yield cancelarCompra(sessao);
                 } else if (isAdicionarMais(mensagem)) {
@@ -296,32 +288,10 @@ public class ChatBotService {
                 if (isConfirmacao(mensagem)) {
                     if (!carrinhoService.getItens(sessao).isEmpty()) {
                         carrinhoService.adicionarItem(sessao, sessao.getProduto(), sessao.getQuantidade());
-                        List<ItemCarrinho> itens = carrinhoService.getItens(sessao);
-                        var vendas = vendaService.processarVendas(itens);
-                        CarrinhoResponse carrinho = carrinhoService.montarResponse(sessao);
-
-                        limparSessao(sessao);
-                        sessaoRepository.save(sessao);
-
-                        yield new ChatbotResponse(
-                                TipoResposta.VENDA_MENSAGEM,
-                                "Venda realizada com sucesso!",
-                                vendas,
-                                carrinho
-                        );
+                        yield iniciarPagamento(sessao);
                     }
 
-                    Venda venda = vendaService.processarVenda(sessao.getProduto(), sessao.getQuantidade());
-
-                    limparSessao(sessao);
-                    sessaoRepository.save(sessao);
-
-                    yield new ChatbotResponse(
-                            TipoResposta.VENDA_MENSAGEM,
-                            "Venda realizada com sucesso!",
-                            null,
-                            venda
-                    );
+                    yield iniciarPagamento(sessao);
 
                 } else if (isAdicionarMais(mensagem)) {
                     carrinhoService.adicionarItem(sessao, sessao.getProduto(), sessao.getQuantidade());
@@ -350,13 +320,10 @@ public class ChatBotService {
                     );
                 }
             }
+            case AGUARDANDO_FORMA_PAGAMENTO -> resolverFormaPagamento(sessao, mensagem);
+            case AGUARDANDO_DADOS_PAGAMENTO -> resolverDadosPagamento(sessao, mensagem);
             case  SAIR_COMPRA -> {
-                sessao.setEstado(INICIAL);
-                sessao.setProduto(null);
-                sessao.setQuantidade(null);
-                sessao.setTipoProdutoInteresse(null);
-                carrinhoService.limpar(sessao);
-                sessao.setUltimaAtualizacao(LocalDateTime.now());
+                limparSessao(sessao);
                 sessaoRepository.save(sessao);
                 yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
             }
@@ -372,6 +339,156 @@ public class ChatBotService {
                         .mensagem("Sua mensagem foi inválida, ou algo deu errado na operação vamos recomeçar");
             }
         };
+    }
+
+    private ChatbotResponse iniciarPagamento(SessaoChat sessao) {
+        sessao.setEstado(AGUARDANDO_FORMA_PAGAMENTO);
+        sessao.setFormaPagamento(null);
+        sessao.setDadosPagamento(null);
+        sessao.setUltimaAtualizacao(LocalDateTime.now());
+        sessaoRepository.save(sessao);
+
+        return new ChatbotResponse(
+                TipoResposta.PRODUTO_MENSAGEM,
+                "Qual a forma de pagamento? Informe pix, cartao ou dinheiro.",
+                null,
+                carrinhoService.getItens(sessao).isEmpty() ? sessao.getProduto() : carrinhoService.montarResponse(sessao)
+        );
+    }
+
+    private ChatbotResponse resolverFormaPagamento(SessaoChat sessao, String mensagem) {
+        if (isCancelamento(mensagem) || isRespostaNegativaParaConfirmacao(mensagem)) {
+            return cancelarCompra(sessao);
+        }
+
+        String formaPagamento = detectarFormaPagamento(mensagem);
+        if (formaPagamento == null) {
+            sessao.setUltimaAtualizacao(LocalDateTime.now());
+            sessaoRepository.save(sessao);
+            return ChatbotResponse.mensagem("Forma de pagamento invalida. Informe pix, cartao ou dinheiro.");
+        }
+
+        sessao.setFormaPagamento(formaPagamento);
+        sessao.setEstado(AGUARDANDO_DADOS_PAGAMENTO);
+        sessao.setUltimaAtualizacao(LocalDateTime.now());
+        sessaoRepository.save(sessao);
+
+        return ChatbotResponse.mensagem(mensagemDadosPagamento(formaPagamento));
+    }
+
+    private ChatbotResponse resolverDadosPagamento(SessaoChat sessao, String mensagem) {
+        if (isCancelamento(mensagem) || isRespostaNegativaParaConfirmacao(mensagem)) {
+            return cancelarCompra(sessao);
+        }
+
+        String dadosPagamento = normalizarDadosPagamento(sessao.getFormaPagamento(), mensagem);
+        if (dadosPagamento == null) {
+            sessao.setUltimaAtualizacao(LocalDateTime.now());
+            sessaoRepository.save(sessao);
+            return ChatbotResponse.mensagem(mensagemDadosPagamento(sessao.getFormaPagamento()));
+        }
+
+        sessao.setDadosPagamento(dadosPagamento);
+        sessao.setUltimaAtualizacao(LocalDateTime.now());
+        sessaoRepository.save(sessao);
+
+        return finalizarVenda(sessao);
+    }
+
+    private ChatbotResponse finalizarVenda(SessaoChat sessao) {
+        if (!carrinhoService.getItens(sessao).isEmpty()) {
+            List<ItemCarrinho> itens = carrinhoService.getItens(sessao);
+            var vendas = vendaService.processarVendas(itens, sessao.getFormaPagamento(), sessao.getDadosPagamento());
+            CarrinhoResponse carrinho = carrinhoService.montarResponse(sessao);
+
+            limparSessao(sessao);
+            sessaoRepository.save(sessao);
+
+            return new ChatbotResponse(
+                    TipoResposta.VENDA_MENSAGEM,
+                    "Venda realizada com sucesso!",
+                    vendas,
+                    carrinho
+            );
+        }
+
+        var venda = vendaService.processarVenda(
+                sessao.getProduto(),
+                sessao.getQuantidade(),
+                sessao.getFormaPagamento(),
+                sessao.getDadosPagamento()
+        );
+
+        limparSessao(sessao);
+        sessaoRepository.save(sessao);
+
+        return new ChatbotResponse(
+                TipoResposta.VENDA_MENSAGEM,
+                "Venda realizada com sucesso!",
+                null,
+                venda
+        );
+    }
+
+    private String detectarFormaPagamento(String mensagem) {
+        String msg = normalizarResposta(mensagem);
+
+        if (contemPalavra(msg, "pix")) {
+            return "PIX";
+        }
+
+        if (contemPalavra(msg, "cartao") || contemPalavra(msg, "credito") || contemPalavra(msg, "debito")) {
+            return "CARTAO";
+        }
+
+        if (contemPalavra(msg, "dinheiro") || contemPalavra(msg, "especie")) {
+            return "DINHEIRO";
+        }
+
+        return null;
+    }
+
+    private String mensagemDadosPagamento(String formaPagamento) {
+        if ("PIX".equals(formaPagamento)) {
+            return "Pagamento via PIX. Informe o nome do pagador ou CPF/CNPJ para identificacao.";
+        }
+
+        if ("CARTAO".equals(formaPagamento)) {
+            return "Pagamento no cartao. Informe debito ou credito e os ultimos 4 digitos do cartao.";
+        }
+
+        if ("DINHEIRO".equals(formaPagamento)) {
+            return "Pagamento em dinheiro. Informe sem troco ou o valor entregue pelo cliente.";
+        }
+
+        return "Informe os dados do pagamento.";
+    }
+
+    private String normalizarDadosPagamento(String formaPagamento, String mensagem) {
+        String msg = normalizarResposta(mensagem);
+        if (msg.isBlank()) {
+            return null;
+        }
+
+        if ("PIX".equals(formaPagamento)) {
+            return "Identificacao PIX: " + mensagem.trim();
+        }
+
+        if ("CARTAO".equals(formaPagamento)) {
+            if ((msg.contains("credito") || msg.contains("debito")) && msg.matches(".*\\d{4}.*")) {
+                return "Cartao: " + mensagem.trim();
+            }
+            return null;
+        }
+
+        if ("DINHEIRO".equals(formaPagamento)) {
+            if (msg.contains("sem troco") || msg.contains("nao precisa troco") || msg.matches(".*\\d+.*")) {
+                return "Dinheiro: " + mensagem.trim();
+            }
+            return null;
+        }
+
+        return mensagem.trim();
     }
 
     private List<Produto> buscarProdutosContexto(SessaoChat sessao) {
@@ -641,6 +758,8 @@ public class ChatBotService {
         sessao.setProduto(null);
         sessao.setQuantidade(null);
         sessao.setTipoProdutoInteresse(null);
+        sessao.setFormaPagamento(null);
+        sessao.setDadosPagamento(null);
         sessao.setUltimaAtualizacao(LocalDateTime.now());
         carrinhoService.limpar(sessao);
     }
