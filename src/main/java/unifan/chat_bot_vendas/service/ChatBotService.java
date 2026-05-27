@@ -233,7 +233,7 @@ public class ChatBotService {
                             vendas,
                             carrinho
                     );
-                } else if (isCancelamento(mensagem)) {
+                } else if (isCancelamento(mensagem) || isNegacaoDireta(mensagem)) {
                     limparSessao(sessao);
                     sessaoRepository.save(sessao);
                     yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
@@ -334,7 +334,7 @@ public class ChatBotService {
                             produtoService.buscarProdutos(),
                             "Adicionei esse item ao pedido. Qual o id do proximo produto?"
                     );
-                } else if (isCancelamento(mensagem)) {
+                } else if (isCancelamento(mensagem) || isNegacaoDireta(mensagem)) {
                     sessao.setEstado(INICIAL);
                     sessao.setProduto(null);
                     sessao.setQuantidade(null);
@@ -591,6 +591,18 @@ public class ChatBotService {
                 || contemPalavra(mensagem, "não")
                 || mensagem.contains("ainda nao")
                 || mensagem.contains("ainda não");
+    }
+
+    private boolean isNegacaoDireta(String mensagem) {
+        if (mensagem == null) {
+            return false;
+        }
+
+        String msg = mensagem.trim();
+        return msg.equals("nao")
+                || msg.equals("não")
+                || msg.equals("n")
+                || msg.equals("negativo");
     }
 
     private boolean contemPalavra(String mensagem, String palavra) {
