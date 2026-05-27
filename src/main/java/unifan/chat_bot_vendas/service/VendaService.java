@@ -11,6 +11,8 @@ import java.util.List;
 @Service
 public class VendaService {
 
+    private static final Long USER_ID_PADRAO = 1L;
+
     @Autowired
     private VendaRepository vendaRepository;
 
@@ -18,6 +20,7 @@ public class VendaService {
         Venda venda = new Venda();
         venda.setProduto(produto);
         venda.setQuantidade(quantidade);
+        venda.setUserid(USER_ID_PADRAO);
         venda = vendaRepository.save(venda);
         return venda;
     }
@@ -30,6 +33,6 @@ public class VendaService {
     }
 
     public List<Venda> getVendas(){
-        return vendaRepository.findAll();
+        return vendaRepository.findByUseridOrderByIdDesc(USER_ID_PADRAO);
     }
 }

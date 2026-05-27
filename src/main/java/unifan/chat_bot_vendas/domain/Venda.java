@@ -32,6 +32,8 @@ public class Venda {
 
     private Double total;
 
+    private Long userid;
+
     public Double getTotal() {
         if (produto == null || produto.getPreco() == null || quantidade == null) {
             return 0.0;

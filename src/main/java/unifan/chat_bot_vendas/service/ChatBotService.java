@@ -123,17 +123,17 @@ public class ChatBotService {
             return chatBotComandosService.executarComandos(intencao, sessao);
         }
 
-        List<ItemPedidoExtraido> itensExtraidos = pedidoParserService.extrairItens(mensagem);
-        if (!itensExtraidos.isEmpty()) {
-            return iniciarPedidoComItens(sessao, itensExtraidos);
-        }
-
         return switch (sessao.getEstado()) {
             case AGUARDANDO_PRODUTO -> {
                 Produto produto = produtoService.buscarProdutoPorIdMensagem(mensagem, sessao.getTipoProdutoInteresse());
 
                 if (produto != null) {
                     yield iniciarQuantidade(sessao, produto);
+                }
+
+                List<ItemPedidoExtraido> itensExtraidos = pedidoParserService.extrairItens(mensagem);
+                if (!itensExtraidos.isEmpty()) {
+                    yield iniciarPedidoComItens(sessao, itensExtraidos);
                 }
 
                 produto = produtoService.buscarProdutoPorNomeExato(mensagem, sessao.getTipoProdutoInteresse());
@@ -183,7 +183,7 @@ public class ChatBotService {
                 );
             }
             case AGUARDANDO_CONFIRMACAO_PRODUTO -> {
-                if (mensagem.contains("confirmo") || mensagem.contains("sim") || mensagem.contains("confirmar")) {
+                if (isConfirmacao(mensagem)) {
                     sessao.setEstado(AGUARDANDO_QUANTIDADE);
                     sessao.setUltimaAtualizacao(LocalDateTime.now());
                     sessaoRepository.save(sessao);
@@ -194,7 +194,7 @@ public class ChatBotService {
                             null,
                             sessao.getProduto()
                     );
-                } else if (mensagem.contains("cancelar") || mensagem.contains("nao") || mensagem.contains("não")
+                } else if (isNegacao(mensagem)
                         || mensagem.contains("outro") || mensagem.contains("errado")) {
                     sessao.setProduto(null);
                     sessao.setEstado(AGUARDANDO_PRODUTO);
@@ -219,7 +219,7 @@ public class ChatBotService {
             }
             case AGUARDANDO_RESOLUCAO_ITEM -> resolverItemPendente(sessao, mensagem);
             case AGUARDANDO_CONFIRMACAO_CARRINHO -> {
-                if (mensagem.contains("confirmo") || mensagem.contains("sim") || mensagem.contains("confirmar")) {
+                if (isConfirmacao(mensagem)) {
                     List<ItemCarrinho> itens = carrinhoService.getItens(sessao);
                     var vendas = vendaService.processarVendas(itens);
                     CarrinhoResponse carrinho = carrinhoService.montarResponse(sessao);
@@ -233,11 +233,23 @@ public class ChatBotService {
                             vendas,
                             carrinho
                     );
-                } else if (mensagem.contains("cancelar") || mensagem.contains("nao") || mensagem.contains("não")
-                        || mensagem.contains("parar")) {
+                } else if (isCancelamento(mensagem)) {
                     limparSessao(sessao);
                     sessaoRepository.save(sessao);
                     yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
+                } else if (isAdicionarMais(mensagem)) {
+                    sessao.setEstado(AGUARDANDO_PRODUTO);
+                    sessao.setProduto(null);
+                    sessao.setQuantidade(null);
+                    sessao.setTipoProdutoInteresse(null);
+                    sessao.setUltimaAtualizacao(LocalDateTime.now());
+                    sessaoRepository.save(sessao);
+
+                    yield ChatbotResponse.listaMensagem(
+                            TipoResposta.LISTA_PRODUTOS_MENSAGEM,
+                            produtoService.buscarProdutos(),
+                            "Certo, vamos adicionar mais itens. Qual o id do proximo produto?"
+                    );
                 }
 
                 sessao.setUltimaAtualizacao(LocalDateTime.now());
@@ -278,7 +290,24 @@ public class ChatBotService {
                 }
             }
             case AGUARDANDO_CONFIRMACAO_COMPRA -> {
-                if (mensagem.contains("confirmo") || mensagem.contains("sim") || mensagem.contains("confirmar")) {
+                if (isConfirmacao(mensagem)) {
+                    if (!carrinhoService.getItens(sessao).isEmpty()) {
+                        carrinhoService.adicionarItem(sessao, sessao.getProduto(), sessao.getQuantidade());
+                        List<ItemCarrinho> itens = carrinhoService.getItens(sessao);
+                        var vendas = vendaService.processarVendas(itens);
+                        CarrinhoResponse carrinho = carrinhoService.montarResponse(sessao);
+
+                        limparSessao(sessao);
+                        sessaoRepository.save(sessao);
+
+                        yield new ChatbotResponse(
+                                TipoResposta.VENDA_MENSAGEM,
+                                "Venda realizada com sucesso!",
+                                vendas,
+                                carrinho
+                        );
+                    }
+
                     Venda venda = vendaService.processarVenda(sessao.getProduto(), sessao.getQuantidade());
 
                     limparSessao(sessao);
@@ -291,8 +320,21 @@ public class ChatBotService {
                             venda
                     );
 
-                } else if (mensagem.contains("cancelar") || mensagem.contains("não")
-                        || mensagem.contains("parar") || mensagem.contains("nao")) {
+                } else if (isAdicionarMais(mensagem)) {
+                    carrinhoService.adicionarItem(sessao, sessao.getProduto(), sessao.getQuantidade());
+                    sessao.setEstado(AGUARDANDO_PRODUTO);
+                    sessao.setProduto(null);
+                    sessao.setQuantidade(null);
+                    sessao.setTipoProdutoInteresse(null);
+                    sessao.setUltimaAtualizacao(LocalDateTime.now());
+                    sessaoRepository.save(sessao);
+
+                    yield ChatbotResponse.listaMensagem(
+                            TipoResposta.LISTA_PRODUTOS_MENSAGEM,
+                            produtoService.buscarProdutos(),
+                            "Adicionei esse item ao pedido. Qual o id do proximo produto?"
+                    );
+                } else if (isCancelamento(mensagem)) {
                     sessao.setEstado(INICIAL);
                     sessao.setProduto(null);
                     sessao.setQuantidade(null);
@@ -304,7 +346,12 @@ public class ChatBotService {
                 } else {
                     sessao.setUltimaAtualizacao(LocalDateTime.now());
                     sessaoRepository.save(sessao);
-                    yield ChatbotResponse.mensagem("Deseja cancelar a compra ?");
+                    yield new ChatbotResponse(
+                            TipoResposta.PRODUTO_MENSAGEM,
+                            "Responda sim para finalizar, comprar mais para adicionar outro produto, ou cancelar para encerrar.",
+                            null,
+                            sessao.getProduto()
+                    );
                 }
             }
             case  SAIR_COMPRA -> {
@@ -508,6 +555,46 @@ public class ChatBotService {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private boolean isConfirmacao(String mensagem) {
+        return contemPalavra(mensagem, "sim")
+                || contemPalavra(mensagem, "confirmo")
+                || contemPalavra(mensagem, "confirmar")
+                || contemPalavra(mensagem, "pode")
+                || contemPalavra(mensagem, "fechar")
+                || contemPalavra(mensagem, "finalizar");
+    }
+
+    private boolean isCancelamento(String mensagem) {
+        return contemPalavra(mensagem, "cancelar")
+                || contemPalavra(mensagem, "cancela")
+                || contemPalavra(mensagem, "desistir")
+                || contemPalavra(mensagem, "desisto")
+                || contemPalavra(mensagem, "parar")
+                || contemPalavra(mensagem, "sair")
+                || contemPalavra(mensagem, "encerrar");
+    }
+
+    private boolean isAdicionarMais(String mensagem) {
+        return mensagem.contains("comprar mais")
+                || mensagem.contains("adicionar mais")
+                || mensagem.contains("colocar mais")
+                || mensagem.contains("incluir mais")
+                || mensagem.contains("mais produto")
+                || mensagem.contains("mais item")
+                || mensagem.equals("mais");
+    }
+
+    private boolean isNegacao(String mensagem) {
+        return contemPalavra(mensagem, "nao")
+                || contemPalavra(mensagem, "não")
+                || mensagem.contains("ainda nao")
+                || mensagem.contains("ainda não");
+    }
+
+    private boolean contemPalavra(String mensagem, String palavra) {
+        return mensagem != null && mensagem.matches(".*\\b" + palavra + "\\b.*");
     }
 
     private void limparSessao(SessaoChat sessao) {

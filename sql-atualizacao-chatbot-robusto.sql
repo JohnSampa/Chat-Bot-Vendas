@@ -26,3 +26,6 @@ CHECK (
         'SAIR_COMPRA'
     )
 );
+
+ALTER TABLE vendas_tb
+    ADD COLUMN IF NOT EXISTS userid bigint;
