@@ -406,7 +406,7 @@ public class ChatBotService {
 
             return new ChatbotResponse(
                     TipoResposta.VENDA_MENSAGEM,
-                    "Venda realizada com sucesso!",
+                    "Venda realizada com sucesso! Redirecionando para o financeiro.",
                     vendas,
                     carrinho
             );
@@ -424,7 +424,7 @@ public class ChatBotService {
 
         return new ChatbotResponse(
                 TipoResposta.VENDA_MENSAGEM,
-                "Venda realizada com sucesso!",
+                "Venda realizada com sucesso! Redirecionando para o financeiro.",
                 null,
                 venda
         );
