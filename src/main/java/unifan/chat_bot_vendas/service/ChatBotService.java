@@ -16,6 +16,7 @@ import unifan.chat_bot_vendas.dto.enums.TipoResposta;
 import unifan.chat_bot_vendas.exceptions.BusinessException;
 import unifan.chat_bot_vendas.repositories.SessaoChatRepository;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -117,6 +118,10 @@ public class ChatBotService {
     }
 
     private ChatbotResponse continuarSessao(final SessaoChat sessao, String mensagem) {
+        if (isEstadoConfirmacaoFinal(sessao) && isRespostaNegativaParaConfirmacao(mensagem)) {
+            return cancelarCompra(sessao);
+        }
+
         Intencao intencao = intencaoService.detectarIntencao(mensagem);
 
         if (intencao != null && intencao.getTipoAcao() == SAIR_CHAT_VENDA) {
@@ -233,10 +238,8 @@ public class ChatBotService {
                             vendas,
                             carrinho
                     );
-                } else if (isCancelamento(mensagem) || isNegacaoDireta(mensagem)) {
-                    limparSessao(sessao);
-                    sessaoRepository.save(sessao);
-                    yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
+                } else if (isCancelamento(mensagem) || isRespostaNegativaParaConfirmacao(mensagem)) {
+                    yield cancelarCompra(sessao);
                 } else if (isAdicionarMais(mensagem)) {
                     sessao.setEstado(AGUARDANDO_PRODUTO);
                     sessao.setProduto(null);
@@ -334,15 +337,8 @@ public class ChatBotService {
                             produtoService.buscarProdutos(),
                             "Adicionei esse item ao pedido. Qual o id do proximo produto?"
                     );
-                } else if (isCancelamento(mensagem) || isNegacaoDireta(mensagem)) {
-                    sessao.setEstado(INICIAL);
-                    sessao.setProduto(null);
-                    sessao.setQuantidade(null);
-                    sessao.setTipoProdutoInteresse(null);
-                    carrinhoService.limpar(sessao);
-                    sessao.setUltimaAtualizacao(LocalDateTime.now());
-                    sessaoRepository.save(sessao);
-                    yield ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
+                } else if (isCancelamento(mensagem) || isRespostaNegativaParaConfirmacao(mensagem)) {
+                    yield cancelarCompra(sessao);
                 } else {
                     sessao.setUltimaAtualizacao(LocalDateTime.now());
                     sessaoRepository.save(sessao);
@@ -558,55 +554,86 @@ public class ChatBotService {
     }
 
     private boolean isConfirmacao(String mensagem) {
-        return contemPalavra(mensagem, "sim")
-                || contemPalavra(mensagem, "confirmo")
-                || contemPalavra(mensagem, "confirmar")
-                || contemPalavra(mensagem, "pode")
-                || contemPalavra(mensagem, "fechar")
-                || contemPalavra(mensagem, "finalizar");
+        String msg = normalizarResposta(mensagem);
+        return contemPalavra(msg, "sim")
+                || contemPalavra(msg, "confirmo")
+                || contemPalavra(msg, "confirmar")
+                || contemPalavra(msg, "pode")
+                || contemPalavra(msg, "fechar")
+                || contemPalavra(msg, "finalizar");
     }
 
     private boolean isCancelamento(String mensagem) {
-        return contemPalavra(mensagem, "cancelar")
-                || contemPalavra(mensagem, "cancela")
-                || contemPalavra(mensagem, "desistir")
-                || contemPalavra(mensagem, "desisto")
-                || contemPalavra(mensagem, "parar")
-                || contemPalavra(mensagem, "sair")
-                || contemPalavra(mensagem, "encerrar");
+        String msg = normalizarResposta(mensagem);
+        return contemPalavra(msg, "cancelar")
+                || contemPalavra(msg, "cancela")
+                || contemPalavra(msg, "desistir")
+                || contemPalavra(msg, "desisto")
+                || contemPalavra(msg, "parar")
+                || contemPalavra(msg, "sair")
+                || contemPalavra(msg, "encerrar");
     }
 
     private boolean isAdicionarMais(String mensagem) {
-        return mensagem.contains("comprar mais")
-                || mensagem.contains("adicionar mais")
-                || mensagem.contains("colocar mais")
-                || mensagem.contains("incluir mais")
-                || mensagem.contains("mais produto")
-                || mensagem.contains("mais item")
-                || mensagem.equals("mais");
+        String msg = normalizarResposta(mensagem);
+        return msg.contains("comprar mais")
+                || msg.contains("adicionar mais")
+                || msg.contains("colocar mais")
+                || msg.contains("incluir mais")
+                || msg.contains("mais produto")
+                || msg.contains("mais item")
+                || msg.equals("mais");
     }
 
     private boolean isNegacao(String mensagem) {
-        return contemPalavra(mensagem, "nao")
-                || contemPalavra(mensagem, "não")
-                || mensagem.contains("ainda nao")
-                || mensagem.contains("ainda não");
+        String msg = normalizarResposta(mensagem);
+        return contemPalavra(msg, "nao")
+                || msg.contains("ainda nao");
     }
 
     private boolean isNegacaoDireta(String mensagem) {
-        if (mensagem == null) {
-            return false;
-        }
-
-        String msg = mensagem.trim();
+        String msg = normalizarResposta(mensagem);
         return msg.equals("nao")
-                || msg.equals("não")
                 || msg.equals("n")
-                || msg.equals("negativo");
+                || msg.equals("negativo")
+                || msg.equals("nao obrigado")
+                || msg.equals("nao quero")
+                || msg.equals("quero nao");
+    }
+
+    private boolean isRespostaNegativaParaConfirmacao(String mensagem) {
+        String msg = normalizarResposta(mensagem);
+        return isNegacaoDireta(msg)
+                || contemPalavra(msg, "nao")
+                || contemPalavra(msg, "negativo");
+    }
+
+    private boolean isEstadoConfirmacaoFinal(SessaoChat sessao) {
+        return sessao != null
+                && (sessao.getEstado() == AGUARDANDO_CONFIRMACAO_CARRINHO
+                || sessao.getEstado() == AGUARDANDO_CONFIRMACAO_COMPRA);
+    }
+
+    private ChatbotResponse cancelarCompra(SessaoChat sessao) {
+        limparSessao(sessao);
+        sessaoRepository.save(sessao);
+        return ChatbotResponse.mensagem("Tudo bem, compra cancelada.");
     }
 
     private boolean contemPalavra(String mensagem, String palavra) {
         return mensagem != null && mensagem.matches(".*\\b" + palavra + "\\b.*");
+    }
+
+    private String normalizarResposta(String mensagem) {
+        if (mensagem == null) {
+            return "";
+        }
+
+        return Normalizer.normalize(mensagem.toLowerCase().trim(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private void limparSessao(SessaoChat sessao) {
