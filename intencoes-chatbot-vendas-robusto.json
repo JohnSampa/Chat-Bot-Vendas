@@ -292,7 +292,9 @@
     "ativa": true,
     "palavrasChaves": [
       {
-        "palavraChave": "calca"
+        "palavraChave": "calca",
+        "setor": "vendas",
+        "peso": 1
       },
       {
         "palavraChave": "cal?a"
