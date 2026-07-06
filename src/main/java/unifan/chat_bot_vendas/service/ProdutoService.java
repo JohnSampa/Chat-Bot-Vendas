@@ -173,7 +173,18 @@ public class ProdutoService {
             return List.of();
         }
 
-        return produtosPorTipoInteresse(tipoProdutoInteresse)
+        List<Produto> produtos = produtosPorTipoInteresse(tipoProdutoInteresse);
+        List<Produto> candidatosPorTokens = produtos
+                .stream()
+                .filter(produto -> contemTodosTokensSignificativos(termoNormalizado, normalizarTermoProduto(produto.getNome())))
+                .sorted(Comparator.comparingInt(produto -> tokens(normalizarTermoProduto(produto.getNome())).size()))
+                .toList();
+
+        if (!candidatosPorTokens.isEmpty()) {
+            return candidatosPorTokens;
+        }
+
+        return produtos
                 .stream()
                 .map(produto -> new ProdutoScore(produto, calcularScore(termoNormalizado, normalizarTermoProduto(produto.getNome()))))
                 .filter(produtoScore -> produtoScore.score() <= 3)
@@ -216,6 +227,8 @@ public class ProdutoService {
 
     private String normalizarTokenProduto(String token) {
         return switch (token) {
+            case "oi", "ola", "bom", "boa", "dia", "tarde", "noite", "um", "uma", "uns", "umas",
+                 "do", "da", "de", "por", "favor", "pfv" -> "";
             case "camisetas", "camiseta" -> "camiseta";
             case "regatas", "regata" -> "regata";
             case "calcas" -> "calca";
@@ -276,6 +289,18 @@ public class ProdutoService {
         return Arrays.stream(texto.split("\\s+"))
                 .filter(token -> token.length() >= 3)
                 .toList();
+    }
+
+    private boolean contemTodosTokensSignificativos(String termo, String nomeProduto) {
+        List<String> tokensTermo = tokens(termo);
+        List<String> tokensProduto = tokens(nomeProduto);
+
+        if (tokensTermo.isEmpty() || tokensProduto.isEmpty()) {
+            return false;
+        }
+
+        return tokensTermo.stream()
+                .allMatch(tokenTermo -> tokensProduto.stream().anyMatch(tokenProduto -> tokenProduto.equals(tokenTermo)));
     }
 
     private int levenshtein(String texto1, String texto2) {

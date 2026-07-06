@@ -37,6 +37,7 @@
 - `PalavraChave` tambem possui `peso`.
 - A deteccao de intencao primeiro calcula o setor dominante da mensagem e depois escolhe a intencao mais forte dentro desse setor.
 - A normalizacao foi centralizada em `TextoUtils`, removendo acentos, pontuacao duplicada e espacos extras.
+- A busca de produto ignora saudacoes/artigos como "oi" e "uma" e prioriza produtos que contenham todos os termos importantes, evitando trocar "Camisa Corinthians" por outro time.
 
 ## Validacao e ambiguidade
 

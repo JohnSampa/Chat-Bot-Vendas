@@ -106,14 +106,14 @@ public class PedidoParserService {
 
     private String limparComandosCompra(String texto) {
         return texto
-                .replaceAll("\\b(quero|queria|gostaria|desejo|preciso|comprar|compra|comparar|levar|pegar|adicionar|adiciona|adiciono|incluir|inclui|colocar|coloca|add|mais|tambem|de)\\b", " ")
+                .replaceAll("\\b(oi|ola|bom dia|boa tarde|boa noite|quero|queria|gostaria|desejo|preciso|comprar|compra|comparar|levar|pegar|adicionar|adiciona|adiciono|incluir|inclui|colocar|coloca|add|mais|tambem|de)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
     }
 
     private String limparTermo(String termo) {
         return termo
-                .replaceAll("\\b(unidades|unidade|pecas|peças|itens|item|do|da|de|tambem|tem|por favor|pfv)\\b", " ")
+                .replaceAll("\\b(oi|ola|bom|boa|dia|tarde|noite|unidades|unidade|pecas|peças|itens|item|do|da|de|tambem|tem|por favor|pfv)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
     }
