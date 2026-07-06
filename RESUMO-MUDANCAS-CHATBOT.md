@@ -26,6 +26,7 @@
 - Se o carrinho tiver um unico item e o usuario responder "quero duas camisas", o bot entende como ajuste de quantidade do item atual.
 - Na confirmacao do carrinho, frases como "quero uma camisa do flamengo tambem" adicionam o novo produto ao pedido atual e iniciam a coleta de tamanho desse item.
 - Na confirmacao do carrinho, frases como "adiciona uma camisa do flamengo" tambem sao tratadas como novo item especifico, sem listar todos os produtos.
+- Pedidos genericos para adicionar item, como "adicionar novo item" ou "incluir outro produto", preservam o pedido atual e perguntam qual produto adicionar.
 - O tamanho aceito pode ser grade por letra (`PP`, `P`, `M`, `G`, `GG`) ou numeracao (`38`, `40`, `42`, `44`).
 - `SessaoChat`, `ItemCarrinhoSessao` e `Venda` agora salvam o tamanho escolhido.
 - Os arquivos `produtos*.json` foram atualizados para remover o campo `tamanho`.
@@ -41,6 +42,9 @@
 
 - Frases nao entendidas retornam `TipoResposta.ERRO` com mensagem orientativa.
 - Excecoes de negocio tambem retornam `ERRO`.
+- O parser trata "comparar" como erro comum de digitacao para "comprar", permitindo frases como "quero comparar 100 camisa do corinthians".
+- Durante uma ambiguidade de produto, o bot agora reconhece uma nova frase de compra, como "quero comprar uma camisa do corinthians", e troca o fluxo em vez de insistir no id anterior.
+- Comandos de cancelamento agora cancelam a compra mesmo quando o bot esta aguardando produto, tamanho, quantidade ou resolucao de ambiguidade.
 - O fluxo de itens ambiguos continua pedindo ao usuario o produto correto por id.
 - O fluxo de atualizacao permite escolher um item do carrinho e trocar por outro produto ou remover o item.
 

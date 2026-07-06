@@ -106,7 +106,7 @@ public class PedidoParserService {
 
     private String limparComandosCompra(String texto) {
         return texto
-                .replaceAll("\\b(quero|queria|gostaria|desejo|preciso|comprar|compra|levar|pegar|adicionar|adiciona|adiciono|incluir|inclui|colocar|coloca|add|mais|tambem|de)\\b", " ")
+                .replaceAll("\\b(quero|queria|gostaria|desejo|preciso|comprar|compra|comparar|levar|pegar|adicionar|adiciona|adiciono|incluir|inclui|colocar|coloca|add|mais|tambem|de)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
     }

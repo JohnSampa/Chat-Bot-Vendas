@@ -246,6 +246,15 @@ public class ChatBotService {
             return cancelarCompra(sessao);
         }
 
+        if (isCancelamento(mensagem)) {
+            return cancelarCompra(sessao);
+        }
+
+        ChatbotResponse respostaAdicionarItem = prepararAdicaoGenericaDeItem(sessao, mensagem);
+        if (respostaAdicionarItem != null) {
+            return respostaAdicionarItem;
+        }
+
         Intencao intencao = intencaoService.detectarIntencao(mensagem);
         if (intencao != null && intencao.getTipoAcao() == SAIR_CHAT_VENDA) {
             return chatBotComandosService.executarComandos(intencao, sessao);
@@ -793,6 +802,11 @@ public class ChatBotService {
             return respostaCarrinho(sessao, "Confirma a compra dos itens do carrinho?");
         }
 
+        List<ItemPedidoExtraido> itensExtraidos = pedidoParserService.extrairItens(mensagem);
+        if (!itensExtraidos.isEmpty()) {
+            return iniciarPedidoComItens(sessao, itensExtraidos);
+        }
+
         Produto produtoSelecionado = selecionarProdutoPendente(mensagem, pendente);
         if (produtoSelecionado == null) {
             return respostaItemPendente(pendente, "Nao encontrei esse produto nas opcoes. Informe o id correto.");
@@ -835,6 +849,29 @@ public class ChatBotService {
 
     private ChatbotResponse respostaCarrinho(SessaoChat sessao, String mensagem) {
         return new ChatbotResponse(TipoResposta.PRODUTO_MENSAGEM, mensagem, null, carrinhoService.montarResponse(sessao));
+    }
+
+    private ChatbotResponse prepararAdicaoGenericaDeItem(SessaoChat sessao, String mensagem) {
+        if (!isAdicionarMais(mensagem) || !pedidoParserService.extrairItens(mensagem).isEmpty()) {
+            return null;
+        }
+
+        if (sessao.getEstado() == AGUARDANDO_CONFIRMACAO_COMPRA
+                && sessao.getProduto() != null
+                && sessao.getQuantidade() != null
+                && sessao.getTamanho() != null) {
+            carrinhoService.adicionarItem(sessao, sessao.getProduto(), sessao.getQuantidade(), sessao.getTamanho());
+        }
+
+        limparItemEmAndamento(sessao);
+        limparPendenciasTemporarias(sessao);
+        sessao.setEstado(AGUARDANDO_PRODUTO);
+        sessao.setTipoProdutoInteresse(null);
+        salvarSessao(sessao);
+
+        return ChatbotResponse.mensagem(
+                "Certo, qual produto deseja adicionar ao pedido? Informe o nome, como camisa do Flamengo, ou o id do produto."
+        );
     }
 
     private ChatbotResponse atualizarQuantidadeCarrinho(SessaoChat sessao, String mensagem) {
@@ -1241,5 +1278,20 @@ public class ChatBotService {
         sessao.setMensagemPendenteCpf(null);
         sessao.setUltimaAtualizacao(LocalDateTime.now());
         carrinhoService.limpar(sessao);
+    }
+
+    private void limparItemEmAndamento(SessaoChat sessao) {
+        sessao.setProduto(null);
+        sessao.setQuantidade(null);
+        sessao.setTamanho(null);
+        sessao.setFormaPagamento(null);
+        sessao.setDadosPagamento(null);
+    }
+
+    private void limparPendenciasTemporarias(SessaoChat sessao) {
+        sessao.setItensPendentesJson(null);
+        sessao.setItemPendenteJson(null);
+        sessao.setItensTamanhoPendentesJson(null);
+        sessao.setItemTamanhoPendenteJson(null);
     }
 }
