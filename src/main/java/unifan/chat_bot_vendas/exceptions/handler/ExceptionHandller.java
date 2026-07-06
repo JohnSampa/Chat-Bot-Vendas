@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import unifan.chat_bot_vendas.dto.ChatbotResponse;
@@ -17,7 +18,7 @@ public class ExceptionHandller {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ChatbotResponse> handleBusinessException(BusinessException ex) {
-        return ResponseEntity.ok(ChatbotResponse.mensagem(ex.getMessage()));
+        return ResponseEntity.ok(new ChatbotResponse(TipoResposta.ERRO, ex.getMessage(), null, null));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -25,7 +26,18 @@ public class ExceptionHandller {
         log.error("Erro de integridade ao processar requisicao", ex);
         return ResponseEntity.ok(new ChatbotResponse(
                 TipoResposta.ERRO,
-                "Nao consegui salvar o estado da conversa. Verifique se o banco esta atualizado com as novas colunas e estados da sessao.",
+                "Nao consegui salvar os dados porque o banco esta com constraints antigas. Atualize com sql-atualizacao-chatbot-robusto.sql ou rode o SQL de correcao especifico informado no projeto.",
+                null,
+                null
+        ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ChatbotResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        log.error("Payload invalido ao processar requisicao", ex);
+        return ResponseEntity.ok(new ChatbotResponse(
+                TipoResposta.ERRO,
+                "Nao consegui ler os dados enviados. Verifique se o JSON esta compativel com a versao atual do backend e reinicie a aplicacao apos atualizar os enums.",
                 null,
                 null
         ));

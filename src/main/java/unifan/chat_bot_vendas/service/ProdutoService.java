@@ -80,6 +80,10 @@ public class ProdutoService {
             return "short";
         }
 
+        if (mensagemNormalizada.equals("bermuda") || mensagemNormalizada.equals("bermudas")) {
+            return "bermuda";
+        }
+
         if (mensagemNormalizada.equals("calca")) {
             return "calca";
         }
@@ -216,6 +220,7 @@ public class ProdutoService {
             case "regatas", "regata" -> "regata";
             case "calcas" -> "calca";
             case "shorts", "shot" -> "short";
+            case "bermudas" -> "bermuda";
             case "sapatos" -> "sapato";
             case "calcados", "calcado", "tenis" -> "sapato";
             case "blusas" -> "blusa";

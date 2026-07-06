@@ -35,11 +35,21 @@ public class SessaoChat {
 
     private Long userid;
 
+    private String cpfCliente;
+
+    private String clientSessionId;
+
+    private LocalDateTime iniciadaEm;
+
+    private boolean ativa = true;
+
     @ManyToOne
     @JoinColumn(name = "produto_id")
     private Produto produto;
 
     private Integer quantidade;
+
+    private String tamanho;
 
     private String tipoProdutoInteresse;
 
@@ -52,9 +62,18 @@ public class SessaoChat {
     @Column(columnDefinition = "text")
     private String itemPendenteJson;
 
+    @Column(columnDefinition = "text")
+    private String itensTamanhoPendentesJson;
+
+    @Column(columnDefinition = "text")
+    private String itemTamanhoPendenteJson;
+
     private String formaPagamento;
 
     @Column(columnDefinition = "text")
     private String dadosPagamento;
+
+    @Column(columnDefinition = "text")
+    private String mensagemPendenteCpf;
 
 }

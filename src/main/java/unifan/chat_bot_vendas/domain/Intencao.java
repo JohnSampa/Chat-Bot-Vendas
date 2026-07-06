@@ -14,6 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import unifan.chat_bot_vendas.domain.enums.Setor;
 import unifan.chat_bot_vendas.domain.enums.TipoAcao;
 
 import java.util.List;
@@ -34,6 +35,9 @@ public class Intencao {
     private String intencao;
 
     private String resposta;
+
+    @Enumerated(EnumType.STRING)
+    private Setor setor = Setor.VENDAS;
 
     @Enumerated(EnumType.STRING)
     private TipoAcao tipoAcao;

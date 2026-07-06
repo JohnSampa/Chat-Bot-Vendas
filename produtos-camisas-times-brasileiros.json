@@ -1,0 +1,82 @@
+﻿[
+    {
+        "nome":  "Camisa Flamengo",
+        "preco":  199.9
+    },
+    {
+        "nome":  "Camisa Vasco",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Fluminense",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Botafogo",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Corinthians",
+        "preco":  199.9
+    },
+    {
+        "nome":  "Camisa Palmeiras",
+        "preco":  199.9
+    },
+    {
+        "nome":  "Camisa Sao Paulo",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Santos",
+        "preco":  179.9
+    },
+    {
+        "nome":  "Camisa Gremio",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Internacional",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Atletico Mineiro",
+        "preco":  199.9
+    },
+    {
+        "nome":  "Camisa Cruzeiro",
+        "preco":  189.9
+    },
+    {
+        "nome":  "Camisa Bahia",
+        "preco":  179.9
+    },
+    {
+        "nome":  "Camisa Vitoria",
+        "preco":  169.9
+    },
+    {
+        "nome":  "Camisa Sport",
+        "preco":  169.9
+    },
+    {
+        "nome":  "Camisa Ceara",
+        "preco":  159.9
+    },
+    {
+        "nome":  "Camisa Fortaleza",
+        "preco":  169.9
+    },
+    {
+        "nome":  "Camisa Athletico Paranaense",
+        "preco":  179.9
+    },
+    {
+        "nome":  "Camisa Coritiba",
+        "preco":  159.9
+    },
+    {
+        "nome":  "Camisa Goias",
+        "preco":  159.9
+    }
+]

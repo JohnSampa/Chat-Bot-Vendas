@@ -8,4 +8,6 @@ import java.util.List;
 public interface VendaRepository extends JpaRepository<Venda, Long> {
 
     List<Venda> findByUseridOrderByIdDesc(Long userid);
+
+    List<Venda> findByCpfClienteOrderByIdDesc(String cpfCliente);
 }

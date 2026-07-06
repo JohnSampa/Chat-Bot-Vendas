@@ -77,6 +77,11 @@ public class PedidoParserService {
             return montarItem(produtoAntes.group(2), produtoAntes.group(1));
         }
 
+        String termo = limparTermo(trecho);
+        if (pareceProduto(termo)) {
+            return new ItemPedidoExtraido(termo, 1);
+        }
+
         return null;
     }
 
@@ -101,16 +106,20 @@ public class PedidoParserService {
 
     private String limparComandosCompra(String texto) {
         return texto
-                .replaceAll("\\b(quero|queria|gostaria|desejo|preciso|comprar|compra|levar|pegar|adicionar|add|mais|de)\\b", " ")
+                .replaceAll("\\b(quero|queria|gostaria|desejo|preciso|comprar|compra|levar|pegar|adicionar|adiciona|adiciono|incluir|inclui|colocar|coloca|add|mais|tambem|de)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
     }
 
     private String limparTermo(String termo) {
         return termo
-                .replaceAll("\\b(unidades|unidade|pecas|peças|itens|item|do|da|de|tem|por favor|pfv)\\b", " ")
+                .replaceAll("\\b(unidades|unidade|pecas|peças|itens|item|do|da|de|tambem|tem|por favor|pfv)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    private boolean pareceProduto(String termo) {
+        return termo.matches(".*\\b(camisa|camiseta|regata|calca|short|shorts|bermuda|blusa|moletom|sapato|calcado|tenis)\\b.*");
     }
 
     private String normalizar(String texto) {

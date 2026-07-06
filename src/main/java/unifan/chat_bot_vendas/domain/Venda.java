@@ -30,13 +30,19 @@ public class Venda {
 
     private Integer quantidade;
 
+    private String tamanho;
+
     private Double total;
 
     private Long userid;
 
+    private String cpfCliente;
+
     private String formaPagamento;
 
     private String dadosPagamento;
+
+    private String status = "FINALIZADO";
 
     public Double getTotal() {
         if (produto == null || produto.getPreco() == null || quantidade == null) {
