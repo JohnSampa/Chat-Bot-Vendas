@@ -116,6 +116,12 @@ public class ChatBotService {
             salvarSessao(sessao);
         }
 
+        boolean deveLimparFluxoForaDoSetor = sessao.getEstado() == INICIAL || sessao.getEstado() == AGUARDANDO_CPF;
+        ChatbotResponse respostaForaDoSetor = responderCompraForaDoSetor(sessao, mensagem, deveLimparFluxoForaDoSetor);
+        if (respostaForaDoSetor != null) {
+            return respostaForaDoSetor;
+        }
+
         if (sessao.getEstado() == AGUARDANDO_CPF) {
             return resolverCpf(sessao, mensagem, clientSessionId);
         }
@@ -1005,6 +1011,127 @@ public class ChatBotService {
                 .orElse(null);
     }
 
+    private ChatbotResponse responderCompraForaDoSetor(SessaoChat sessao, String mensagem, boolean limparFluxo) {
+        String categoria = detectarCategoriaForaDoSetor(mensagem);
+        if (categoria == null) {
+            return null;
+        }
+
+        if (limparFluxo) {
+            limparSessao(sessao);
+        }
+        salvarSessao(sessao);
+
+        return ChatbotResponse.mensagem("Desculpe, trabalhamos apenas com roupas, calcados e produtos de times, "
+                + "como camisas, calcas, shorts, bermudas, blusas, sapatos e tenis.");
+    }
+
+    private String detectarCategoriaForaDoSetor(String mensagem) {
+        String msg = normalizarResposta(mensagem);
+        if (msg.isBlank() || !indicaInteresseComercial(msg)) {
+            return null;
+        }
+
+        String termoComercial = extrairTermoComercial(msg);
+        if (termoComercial.isBlank()) {
+            return null;
+        }
+
+        if (!termoEstaNoEscopoDaLoja(termoComercial)) {
+            return "fora do escopo";
+        }
+
+        return null;
+    }
+
+    private String extrairTermoComercial(String mensagem) {
+        return java.util.Arrays.stream(mensagem.split("\\s+"))
+                .map(this::normalizarTokenEscopo)
+                .filter(token -> !token.isBlank())
+                .filter(token -> !isTokenComandoComercial(token))
+                .filter(token -> !token.matches("\\d+"))
+                .reduce("", (acc, token) -> acc.isBlank() ? token : acc + " " + token);
+    }
+
+    private boolean termoEstaNoEscopoDaLoja(String termo) {
+        List<String> tokens = java.util.Arrays.stream(termo.split("\\s+"))
+                .map(this::normalizarTokenEscopo)
+                .filter(token -> !token.isBlank())
+                .toList();
+
+        if (tokens.isEmpty()) {
+            return true;
+        }
+
+        if (tokens.stream().anyMatch(this::isTokenEscopoLoja)) {
+            return true;
+        }
+
+        return produtoService.buscarProdutos()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(Produto::getNome)
+                .filter(Objects::nonNull)
+                .map(this::normalizarResposta)
+                .map(nome -> java.util.Arrays.stream(nome.split("\\s+"))
+                        .map(this::normalizarTokenEscopo)
+                        .filter(token -> !token.isBlank())
+                        .toList())
+                .anyMatch(tokensProduto -> tokens.stream().allMatch(tokensProduto::contains));
+    }
+
+    private String normalizarTokenEscopo(String token) {
+        if (token == null) {
+            return "";
+        }
+
+        return switch (token) {
+            case "camisetas", "camiseta", "camisas" -> "camisa";
+            case "regatas" -> "regata";
+            case "calcas" -> "calca";
+            case "shorts", "shot" -> "short";
+            case "bermudas" -> "bermuda";
+            case "blusas" -> "blusa";
+            case "sapatos" -> "sapato";
+            case "calcados", "calcado" -> "calcado";
+            case "tenis" -> "tenis";
+            case "roupas" -> "roupa";
+            case "pecas" -> "peca";
+            default -> token.length() > 4 && token.endsWith("s") ? token.substring(0, token.length() - 1) : token;
+        };
+    }
+
+    private boolean isTokenComandoComercial(String token) {
+        return switch (token) {
+            case "oi", "ola", "bom", "boa", "dia", "tarde", "noite", "quero", "querer", "queria", "gostaria",
+                 "desejo", "preciso", "comprar", "compra", "comparar", "levar", "pegar", "adicionar",
+                 "adiciona", "incluir", "inclui", "colocar", "coloca", "tem", "vende", "vendem", "procuro",
+                 "busco", "um", "uma", "uns", "umas", "dois", "duas", "tres", "quatro", "cinco", "seis",
+                 "sete", "oito", "nove", "dez", "de", "do", "da", "dos", "das", "para", "pra", "por",
+                 "favor", "pfv", "tambem" -> true;
+            default -> false;
+        };
+    }
+
+    private boolean isTokenEscopoLoja(String token) {
+        return switch (token) {
+            case "roupa", "vestuario", "peca", "camisa", "camiseta", "polo", "regata", "calca", "jeans",
+                 "moletom", "sarja", "cargo", "jogger", "short", "bermuda", "blusa", "casaco", "tricot",
+                 "jaqueta", "vestido", "saia", "meia", "uniforme", "sapato", "calcado", "tenis", "mocassim",
+                 "oxford", "bota", "sandalia", "chinelo", "time", "torcedor", "esportivo", "esportiva",
+                 "flamengo", "vasco", "fluminense", "botafogo", "corinthian", "palmeira", "sao", "paulo",
+                 "santos", "gremio", "internacional", "atletico", "mineiro", "cruzeiro", "bahia", "vitoria",
+                 "sport", "ceara", "fortaleza", "athletico", "paranaense", "coritiba", "goias" -> true;
+            default -> false;
+        };
+    }
+
+    private boolean indicaInteresseComercial(String mensagem) {
+        return contemAlgumaPalavra(mensagem, "comprar", "compra", "comparar", "levar", "pegar", "adicionar",
+                "incluir", "colocar", "querer", "quero", "queria", "gostaria", "desejo", "preciso", "tem",
+                "vende", "vendem", "procuro", "busco");
+    }
+
     private String detectarFormaPagamento(String mensagem) {
         String msg = normalizarResposta(mensagem);
         if (contemPalavra(msg, "pix")) {
@@ -1211,6 +1338,15 @@ public class ChatBotService {
 
     private boolean contemPalavra(String mensagem, String palavra) {
         return mensagem != null && mensagem.matches(".*\\b" + palavra + "\\b.*");
+    }
+
+    private boolean contemAlgumaPalavra(String mensagem, String... palavras) {
+        for (String palavra : palavras) {
+            if (contemPalavra(mensagem, palavra)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String detectarTamanho(String mensagem) {
