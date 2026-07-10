@@ -196,7 +196,7 @@ public class ChatBotService {
         sessao.setEstado(AGUARDANDO_CPF);
         sessao.setMensagemPendenteCpf(mensagemPendente);
         salvarSessao(sessao);
-        return ChatbotResponse.mensagem("Para continuar com pedido, compra ou consulta, informe o CPF do cliente.");
+        return ChatbotResponse.mensagem("Para continuar com pedido, compra ou consulta, informe o CPF ou CNPJ do cliente.");
     }
 
     private ChatbotResponse resolverCpf(SessaoChat sessao, String mensagem, String clientSessionId) {
@@ -204,7 +204,7 @@ public class ChatBotService {
         if (!cpfValido(cpf)) {
             return new ChatbotResponse(
                     TipoResposta.ERRO,
-                    "CPF invalido. Informe um CPF com 11 digitos para continuar.",
+                    "CPF/CNPJ invalido. Informe CPF com 11 digitos ou CNPJ com 14 digitos para continuar.",
                     null,
                     null
             );
@@ -217,7 +217,7 @@ public class ChatBotService {
         salvarSessao(sessao);
 
         if (mensagemPendente == null || mensagemPendente.isBlank()) {
-            return ChatbotResponse.mensagem("CPF registrado. Como posso ajudar?");
+            return ChatbotResponse.mensagem("CPF/CNPJ registrado. Como posso ajudar?");
         }
 
         return processarMensagem(new ChatbotRequest(mensagemPendente, cpf, clientSessionId, false));
@@ -1094,11 +1094,12 @@ public class ChatBotService {
         if (!isPerguntaFinanceiraOuPagamento(msg)) {
             return null;
         }
-        if (sessao != null && sessao.getEstado() == AGUARDANDO_DADOS_PAGAMENTO) {
+        if (sessao != null && sessao.getEstado() == AGUARDANDO_DADOS_PAGAMENTO
+                && !isPerguntaInformativaFinanceira(msg)) {
             return null;
         }
         if (sessao != null && sessao.getEstado() == AGUARDANDO_FORMA_PAGAMENTO
-                && !contemPalavra(msg, "desconto")) {
+                && !isPerguntaInformativaFinanceira(msg)) {
             return null;
         }
 
@@ -1118,7 +1119,7 @@ public class ChatBotService {
         }
 
         salvarSessao(sessao);
-        return respostaCarrinhoOuMensagem(sessao, resposta + " Confirma a compra para continuar?");
+        return respostaCarrinhoOuMensagem(sessao, resposta + complementoProximoPassoFinanceiro(sessao));
     }
 
     private ChatbotResponse respostaCarrinhoOuMensagem(SessaoChat sessao, String mensagem) {
@@ -1127,6 +1128,27 @@ public class ChatBotService {
         }
 
         return ChatbotResponse.mensagem(mensagem);
+    }
+
+    private String complementoProximoPassoFinanceiro(SessaoChat sessao) {
+        if (sessao == null || sessao.getEstado() == null) {
+            return "";
+        }
+
+        if (sessao.getEstado() == AGUARDANDO_FORMA_PAGAMENTO) {
+            return " Para continuar, informe pix, cartao ou dinheiro.";
+        }
+
+        if (sessao.getEstado() == AGUARDANDO_DADOS_PAGAMENTO) {
+            return " Para continuar, " + mensagemDadosPagamento(sessao.getFormaPagamento());
+        }
+
+        if (sessao.getEstado() == AGUARDANDO_CONFIRMACAO_CARRINHO
+                || sessao.getEstado() == AGUARDANDO_CONFIRMACAO_COMPRA) {
+            return " Confirma a compra para continuar?";
+        }
+
+        return "";
     }
 
     private String normalizarTokenEscopo(String token) {
@@ -1181,6 +1203,19 @@ public class ChatBotService {
                 "parcelamento", "juros");
     }
 
+    private boolean isPerguntaInformativaFinanceira(String mensagem) {
+        return contemAlgumaPalavra(mensagem, "desconto", "promocao", "juros", "parcelamento", "parcela",
+                "parcelar")
+                || mensagem.startsWith("tem ")
+                || mensagem.startsWith("aceita ")
+                || mensagem.startsWith("aceitam ")
+                || mensagem.startsWith("posso ")
+                || mensagem.startsWith("pode ")
+                || mensagem.startsWith("quais ")
+                || mensagem.startsWith("qual ")
+                || mensagem.startsWith("como ");
+    }
+
     private boolean indicaInteresseComercial(String mensagem) {
         return contemAlgumaPalavra(mensagem, "comprar", "compra", "comparar", "levar", "pegar", "adicionar",
                 "incluir", "colocar", "querer", "quero", "queria", "gostaria", "desejo", "preciso", "tem",
@@ -1203,7 +1238,7 @@ public class ChatBotService {
 
     private String mensagemDadosPagamento(String formaPagamento) {
         if ("PIX".equals(formaPagamento)) {
-            return "Pagamento via PIX. Informe o nome do pagador ou CPF/CNPJ para identificacao.";
+            return "Pagamento via PIX. Informe o CPF com 11 digitos ou CNPJ com 14 digitos para identificacao do pagador.";
         }
         if ("CARTAO".equals(formaPagamento)) {
             return "Pagamento no cartao. Informe debito ou credito e os ultimos 4 digitos do cartao.";
@@ -1220,7 +1255,11 @@ public class ChatBotService {
             return null;
         }
         if ("PIX".equals(formaPagamento)) {
-            return "Identificacao PIX: " + mensagem.trim();
+            String documento = normalizarCpf(mensagem);
+            if (!cpfValido(documento)) {
+                return null;
+            }
+            return (documento.length() == 14 ? "CNPJ PIX: " : "CPF PIX: ") + documento;
         }
         if ("CARTAO".equals(formaPagamento)) {
             return (msg.contains("credito") || msg.contains("debito")) && msg.matches(".*\\d{4}.*")
@@ -1444,12 +1483,12 @@ public class ChatBotService {
     }
 
     private boolean cpfValido(String cpf) {
-        return cpf != null && cpf.length() == 11;
+        return cpf != null && (cpf.length() == 11 || cpf.length() == 14);
     }
 
     private void validarCpf(String cpf) {
-        if (cpf == null || cpf.length() != 11) {
-            throw new BusinessException("Informe um CPF valido com 11 digitos para identificar o cliente");
+        if (!cpfValido(cpf)) {
+            throw new BusinessException("Informe CPF com 11 digitos ou CNPJ com 14 digitos para identificar o cliente");
         }
     }
 

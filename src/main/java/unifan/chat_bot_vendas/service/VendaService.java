@@ -140,14 +140,14 @@ public class VendaService {
     private Venda buscarPedidoDoCliente(String cpfCliente, Long pedidoId) {
         String cpf = normalizarCpf(cpfCliente);
         if (cpf.isBlank()) {
-            throw new BusinessException("Informe o CPF do cliente");
+            throw new BusinessException("Informe o CPF ou CNPJ do cliente");
         }
 
         Venda venda = vendaRepository.findById(pedidoId)
                 .orElseThrow(() -> new BusinessException("Pedido nao encontrado"));
 
         if (!cpf.equals(venda.getCpfCliente())) {
-            throw new BusinessException("Pedido nao pertence ao CPF informado");
+            throw new BusinessException("Pedido nao pertence ao CPF/CNPJ informado");
         }
 
         return venda;

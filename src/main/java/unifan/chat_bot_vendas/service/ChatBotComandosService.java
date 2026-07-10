@@ -50,7 +50,7 @@ public class ChatBotComandosService {
     public ChatbotResponse continuarPedido(SessaoChat sessao) {
         SessaoChat sessaoPedido = localizarSessaoComPedidoAberto(sessao);
         if (sessaoPedido == null) {
-            return ChatbotResponse.mensagem("Nao encontrei pedido em aberto para este CPF. Posso iniciar uma nova compra para voce.");
+            return ChatbotResponse.mensagem("Nao encontrei pedido em aberto para este CPF/CNPJ. Posso iniciar uma nova compra para voce.");
         }
 
         ativarSessaoPedido(sessao, sessaoPedido);
@@ -76,7 +76,7 @@ public class ChatBotComandosService {
     private ChatbotResponse iniciarAtualizacaoPedido(SessaoChat sessao) {
         SessaoChat sessaoPedido = localizarSessaoComPedidoAberto(sessao);
         if (sessaoPedido == null) {
-            return ChatbotResponse.mensagem("Nao encontrei pedido em aberto para este CPF. Inicie uma compra ou consulte pedidos finalizados.");
+            return ChatbotResponse.mensagem("Nao encontrei pedido em aberto para este CPF/CNPJ. Inicie uma compra ou consulte pedidos finalizados.");
         }
 
         ativarSessaoPedido(sessao, sessaoPedido);
@@ -94,12 +94,12 @@ public class ChatBotComandosService {
     private ChatbotResponse deletarPedidoAberto(SessaoChat sessao) {
         SessaoChat sessaoPedido = localizarSessaoComPedidoAberto(sessao);
         if (sessaoPedido == null && sessao.getProduto() == null) {
-            return ChatbotResponse.mensagem("Nao encontrei pedido em aberto para cancelar neste CPF.");
+            return ChatbotResponse.mensagem("Nao encontrei pedido em aberto para cancelar neste CPF/CNPJ.");
         }
 
         limparSessao(sessaoPedido == null ? sessao : sessaoPedido);
         sessaoChatRepository.save(sessaoPedido == null ? sessao : sessaoPedido);
-        return ChatbotResponse.mensagem("Pedido em aberto cancelado para este CPF.");
+        return ChatbotResponse.mensagem("Pedido em aberto cancelado para este CPF/CNPJ.");
     }
 
     private ChatbotResponse sairChatVenda(Intencao intencao, SessaoChat sessao) {
