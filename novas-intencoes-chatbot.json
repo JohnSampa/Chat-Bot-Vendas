@@ -581,6 +581,13 @@
       { "palavraChave": "como pagar", "setor": "FINANCEIRO", "peso": 4 },
       { "palavraChave": "posso pagar", "setor": "FINANCEIRO", "peso": 3 },
       { "palavraChave": "pix", "setor": "FINANCEIRO", "peso": 3 },
+      { "palavraChave": "desconto no pix", "setor": "FINANCEIRO", "peso": 6 },
+      { "palavraChave": "tem desconto no pix", "setor": "FINANCEIRO", "peso": 6 },
+      { "palavraChave": "desconto para pix", "setor": "FINANCEIRO", "peso": 6 },
+      { "palavraChave": "desconto pagando no pix", "setor": "FINANCEIRO", "peso": 6 },
+      { "palavraChave": "pix tem desconto", "setor": "FINANCEIRO", "peso": 6 },
+      { "palavraChave": "a vista no pix", "setor": "FINANCEIRO", "peso": 5 },
+      { "palavraChave": "pagar a vista no pix", "setor": "FINANCEIRO", "peso": 5 },
       { "palavraChave": "pagar no pix", "setor": "FINANCEIRO", "peso": 4 },
       { "palavraChave": "quero pagar no pix", "setor": "FINANCEIRO", "peso": 4 },
       { "palavraChave": "cartao", "setor": "FINANCEIRO", "peso": 3 },
@@ -597,6 +604,21 @@
       { "palavraChave": "valor cobrado", "setor": "FINANCEIRO", "peso": 4 },
       { "palavraChave": "alterar pagamento", "setor": "FINANCEIRO", "peso": 4 },
       { "palavraChave": "trocar forma de pagamento", "setor": "FINANCEIRO", "peso": 4 }
+    ]
+  },
+  {
+    "intencao": "Desconto no Pix",
+    "resposta": "No momento nao ha desconto automatico no Pix. Voce pode pagar no Pix ao finalizar o pedido.",
+    "setor": "FINANCEIRO",
+    "ativa": true,
+    "palavrasChaves": [
+      { "palavraChave": "desconto no pix", "setor": "FINANCEIRO", "peso": 8 },
+      { "palavraChave": "tem desconto no pix", "setor": "FINANCEIRO", "peso": 8 },
+      { "palavraChave": "pix tem desconto", "setor": "FINANCEIRO", "peso": 8 },
+      { "palavraChave": "desconto para pix", "setor": "FINANCEIRO", "peso": 8 },
+      { "palavraChave": "desconto pagando no pix", "setor": "FINANCEIRO", "peso": 8 },
+      { "palavraChave": "pagando no pix tem desconto", "setor": "FINANCEIRO", "peso": 8 },
+      { "palavraChave": "a vista no pix tem desconto", "setor": "FINANCEIRO", "peso": 8 }
     ]
   },
   {

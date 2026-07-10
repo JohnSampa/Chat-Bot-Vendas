@@ -256,6 +256,11 @@ public class ChatBotService {
             return cancelarCompra(sessao);
         }
 
+        ChatbotResponse respostaFinanceira = responderPerguntaFinanceiraNoFluxo(sessao, mensagem);
+        if (respostaFinanceira != null) {
+            return respostaFinanceira;
+        }
+
         ChatbotResponse respostaAdicionarItem = prepararAdicaoGenericaDeItem(sessao, mensagem);
         if (respostaAdicionarItem != null) {
             return respostaAdicionarItem;
@@ -1032,6 +1037,10 @@ public class ChatBotService {
             return null;
         }
 
+        if (isPerguntaFinanceiraOuPagamento(msg)) {
+            return null;
+        }
+
         String termoComercial = extrairTermoComercial(msg);
         if (termoComercial.isBlank()) {
             return null;
@@ -1080,6 +1089,46 @@ public class ChatBotService {
                 .anyMatch(tokensProduto -> tokens.stream().allMatch(tokensProduto::contains));
     }
 
+    private ChatbotResponse responderPerguntaFinanceiraNoFluxo(SessaoChat sessao, String mensagem) {
+        String msg = normalizarResposta(mensagem);
+        if (!isPerguntaFinanceiraOuPagamento(msg)) {
+            return null;
+        }
+        if (sessao != null && sessao.getEstado() == AGUARDANDO_DADOS_PAGAMENTO) {
+            return null;
+        }
+        if (sessao != null && sessao.getEstado() == AGUARDANDO_FORMA_PAGAMENTO
+                && !contemPalavra(msg, "desconto")) {
+            return null;
+        }
+
+        String resposta;
+        if (contemPalavra(msg, "desconto") && contemPalavra(msg, "pix")) {
+            resposta = "No momento nao ha desconto automatico no Pix. Voce pode pagar no Pix ao finalizar o pedido.";
+        } else if (contemPalavra(msg, "desconto") || contemPalavra(msg, "promocao")) {
+            resposta = "No momento nao ha desconto automatico cadastrado para este pedido.";
+        } else if (contemPalavra(msg, "pix")) {
+            resposta = "Sim, aceitamos Pix como forma de pagamento no fechamento do pedido.";
+        } else if (contemPalavra(msg, "cartao")) {
+            resposta = "Sim, aceitamos pagamento no cartao. Ao finalizar, informe se sera credito ou debito.";
+        } else if (contemPalavra(msg, "dinheiro")) {
+            resposta = "Sim, aceitamos dinheiro. Ao finalizar, informe se precisa de troco.";
+        } else {
+            resposta = "As formas de pagamento disponiveis sao Pix, cartao e dinheiro.";
+        }
+
+        salvarSessao(sessao);
+        return respostaCarrinhoOuMensagem(sessao, resposta + " Confirma a compra para continuar?");
+    }
+
+    private ChatbotResponse respostaCarrinhoOuMensagem(SessaoChat sessao, String mensagem) {
+        if (sessao != null && !carrinhoService.getItens(sessao).isEmpty()) {
+            return respostaCarrinho(sessao, mensagem);
+        }
+
+        return ChatbotResponse.mensagem(mensagem);
+    }
+
     private String normalizarTokenEscopo(String token) {
         if (token == null) {
             return "";
@@ -1124,6 +1173,12 @@ public class ChatBotService {
                  "sport", "ceara", "fortaleza", "athletico", "paranaense", "coritiba", "goias" -> true;
             default -> false;
         };
+    }
+
+    private boolean isPerguntaFinanceiraOuPagamento(String mensagem) {
+        return contemAlgumaPalavra(mensagem, "pix", "pagamento", "pagar", "cartao", "credito", "debito",
+                "dinheiro", "boleto", "maquininha", "troco", "desconto", "promocao", "parcelar", "parcela",
+                "parcelamento", "juros");
     }
 
     private boolean indicaInteresseComercial(String mensagem) {
