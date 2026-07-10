@@ -147,6 +147,13 @@ public class ChatBotService {
             return chatBotComandosService.continuarPedido(sessao);
         }
 
+        if (isConsultaPedidos(msg)) {
+            if (!cpfValido(sessao.getCpfCliente())) {
+                return solicitarCpf(sessao, mensagem);
+            }
+            return ChatbotResponse.lista(TipoResposta.LISTA_VENDAS, vendaService.getVendas(sessao.getCpfCliente()));
+        }
+
         Intencao intencao = intencaoService.detectarIntencao(msg);
         if (intencao == null) {
             return new ChatbotResponse(
@@ -1176,8 +1183,9 @@ public class ChatBotService {
         return switch (token) {
             case "oi", "ola", "bom", "boa", "dia", "tarde", "noite", "quero", "querer", "queria", "gostaria",
                  "desejo", "preciso", "comprar", "compra", "comparar", "levar", "pegar", "adicionar",
-                 "adiciona", "incluir", "inclui", "colocar", "coloca", "tem", "vende", "vendem", "procuro",
-                 "busco", "um", "uma", "uns", "umas", "dois", "duas", "tres", "quatro", "cinco", "seis",
+                 "adiciona", "incluir", "inclui", "colocar", "coloca", "consultar", "consulta", "verificar",
+                 "checar", "listar", "ver", "tem", "vende", "vendem", "procuro", "busco", "meu", "minha",
+                 "meus", "minhas", "um", "uma", "uns", "umas", "dois", "duas", "tres", "quatro", "cinco", "seis",
                  "sete", "oito", "nove", "dez", "de", "do", "da", "dos", "das", "para", "pra", "por",
                  "favor", "pfv", "tambem" -> true;
             default -> false;
@@ -1186,7 +1194,7 @@ public class ChatBotService {
 
     private boolean isTokenEscopoLoja(String token) {
         return switch (token) {
-            case "roupa", "vestuario", "peca", "camisa", "camiseta", "polo", "regata", "calca", "jeans",
+            case "pedido", "venda", "compra", "historico", "carrinho", "roupa", "vestuario", "peca", "camisa", "camiseta", "polo", "regata", "calca", "jeans",
                  "moletom", "sarja", "cargo", "jogger", "short", "bermuda", "blusa", "casaco", "tricot",
                  "jaqueta", "vestido", "saia", "meia", "uniforme", "sapato", "calcado", "tenis", "mocassim",
                  "oxford", "bota", "sandalia", "chinelo", "time", "torcedor", "esportivo", "esportiva",
@@ -1382,6 +1390,24 @@ public class ChatBotService {
                 && (contemPalavra(msg, "pedido")
                 || contemPalavra(msg, "compra")
                 || contemPalavra(msg, "carrinho"));
+    }
+
+    private boolean isConsultaPedidos(String mensagem) {
+        String msg = normalizarResposta(mensagem);
+        return (contemPalavra(msg, "consultar")
+                || contemPalavra(msg, "verificar")
+                || contemPalavra(msg, "checar")
+                || contemPalavra(msg, "listar")
+                || msg.contains("ver meus")
+                || msg.contains("meus pedidos")
+                || msg.contains("minhas compras")
+                || msg.contains("historico"))
+                && (contemPalavra(msg, "pedido")
+                || contemPalavra(msg, "pedidos")
+                || contemPalavra(msg, "venda")
+                || contemPalavra(msg, "vendas")
+                || contemPalavra(msg, "compra")
+                || contemPalavra(msg, "compras"));
     }
 
     private boolean isRemocaoItem(String mensagem) {
